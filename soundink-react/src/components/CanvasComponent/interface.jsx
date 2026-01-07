@@ -690,7 +690,7 @@ const CanvasComponent = () => {
   };
 
   useEffect(() => {
-    if (selectedSlot) { // changed selectedColor to selectedSlot - Renee
+    if (selectedColor) {
       document.addEventListener("mousedown", handleClickOutsideInstrument);
     } else {
       document.removeEventListener("mousedown", handleClickOutsideInstrument);
@@ -698,7 +698,7 @@ const CanvasComponent = () => {
 
     return () =>
       document.removeEventListener("mousedown", handleClickOutsideInstrument);
-  }, [selectedSlot]); // changed selectedColor to selectedSlot - Renee
+  }, [selectedColor]);
 
   useEffect(() => {
     const root = document.documentElement;

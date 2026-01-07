@@ -690,7 +690,7 @@ const CanvasComponent = () => {
   };
 
   useEffect(() => {
-    if (selectedColor) {
+    if (selectedSlot) { // changed selectedColor to selectedSlot - Renee
       document.addEventListener("mousedown", handleClickOutsideInstrument);
     } else {
       document.removeEventListener("mousedown", handleClickOutsideInstrument);
@@ -698,7 +698,7 @@ const CanvasComponent = () => {
 
     return () =>
       document.removeEventListener("mousedown", handleClickOutsideInstrument);
-  }, [selectedColor]);
+  }, [selectedSlot]); // changed selectedColor to selectedSlot - Renee
 
   useEffect(() => {
     const root = document.documentElement;
@@ -771,7 +771,8 @@ const CanvasComponent = () => {
       ...prevMap,
       [selectedSlot]: instrument, // Update the instrument for the selected slot
     }));
-    closeInstrumentMenu(); // Close the modal after selection
+    // Don't close after selection - Renee
+    // closeInstrumentMenu(); // Close the modal after selection
   };
 
   const updateColorForSlot = (slot, newColor) => {

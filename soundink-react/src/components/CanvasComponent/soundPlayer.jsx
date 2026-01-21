@@ -1,5 +1,5 @@
 import { mapNoteToSampleNumber, mapColorToInstrumentFolder, getMapRowToNote } from './soundMappings'; // Import both mappings
-import { useBpm } from './bpmContext'; // Import the BPM context
+import { useBpm } from './bpmContext'; // Import the BPM context - changed Renee
 import { gridConfigurations } from '../GridComponent/gridConfig';
 import { openDB, getFromDB, saveToDB } from './utils';
 

@@ -52,7 +52,7 @@ calculateLocalWidth
 } from './drawing';
 
 // Importing context
-import { useBpm } from './BpmContext';
+import { useBpm } from './bpmContext'; // changed - Renee
 import { usePlaybackSpeed } from './playbackSpeedContext';
 
 // Importing other utilities

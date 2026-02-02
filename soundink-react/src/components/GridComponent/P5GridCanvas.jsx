@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import p5 from 'p5';
 
+// Note: P5GridCanvas is not currently used anywhere - Renee
+
 export const P5GridCanvas = ({ showGrid, scannedColumn, intersectedDots }) => {
   const canvasRef = useRef(null);
   const numDotsX = 50;
@@ -54,7 +56,8 @@ export const P5GridCanvas = ({ showGrid, scannedColumn, intersectedDots }) => {
   };
 
   const setup = (p) => {
-    p.createCanvas(window.innerWidth, window.innerHeight);
+    const container = canvasRef.current.parentElement;
+    p.createCanvas(container.clientWidth, container.clientHeight);
     p.noLoop();
   };
 
@@ -70,8 +73,11 @@ export const P5GridCanvas = ({ showGrid, scannedColumn, intersectedDots }) => {
       p.draw = () => draw(p);
 
       p.windowResized = () => {
-        p.resizeCanvas(window.innerWidth, window.innerHeight);
+        const container = canvasRef.current.parentElement;
+        p.resizeCanvas(container.clientWidth, container.clientHeight);
+
         if (showGrid) {
+          p.clear();
           p.redraw();
         }
       };

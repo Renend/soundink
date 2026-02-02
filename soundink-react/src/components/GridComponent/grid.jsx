@@ -170,6 +170,14 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
         }
     };
 
+    useEffect(() => { // Added function - Renee
+    // eequivalent to manually resizing the window - fixes Safari
+    requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('resize'));
+    });
+    }, []);
+
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;

@@ -680,25 +680,25 @@ const CanvasComponent = () => {
     };
   }, [activeColorSlot]);
 
-  const handleClickOutsideInstrument = (event) => {
-    if (
-      instrumentMenuRef.current &&
-      !instrumentMenuRef.current.contains(event.target)
-    ) {
-      closeInstrumentMenu(); // Close the instrument menu
-    }
-  };
+  // const handleClickOutsideInstrument = (event) => {
+  //   if (
+  //     instrumentMenuRef.current &&
+  //     !instrumentMenuRef.current.contains(event.target)
+  //   ) {
+  //     closeInstrumentMenu(); // Close the instrument menu
+  //   }
+  // };
 
-  useEffect(() => {
-    if (selectedColor) {
-      document.addEventListener("mousedown", handleClickOutsideInstrument);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutsideInstrument);
-    }
+  // useEffect(() => {
+  //   if (selectedColor) {
+  //     document.addEventListener("mousedown", handleClickOutsideInstrument);
+  //   } else {
+  //     document.removeEventListener("mousedown", handleClickOutsideInstrument);
+  //   }
 
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutsideInstrument);
-  }, [selectedColor]);
+  //   return () =>
+  //     document.removeEventListener("mousedown", handleClickOutsideInstrument);
+  // }, [selectedColor]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -1938,7 +1938,16 @@ const CanvasComponent = () => {
       )}
 
       {selectedSlot && (
-        <div ref={instrumentMenuRef} className="combined-selection-modal">
+        <div
+          className="popup-overlay"
+          onClick={closeInstrumentMenu}
+        >
+          <div
+            ref={instrumentMenuRef}
+            className="combined-selection-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
           <button onClick={closeInstrumentMenu} className="close-modal-button top-left">
             <img src={quitIcon} alt="Close" className="iconQuit" />
           </button>
@@ -1958,7 +1967,6 @@ const CanvasComponent = () => {
               ))
             )}
           </div>
-
 
           <div className="instrument-options">
             {instrumentOptions.map((instrument, index) => (
@@ -1980,10 +1988,20 @@ const CanvasComponent = () => {
             ))}
           </div>
         </div>
+        </div>
       )}
 
       {selectedLine && (
-        <div ref={instrumentMenuRef} className="combined-selection-modal">
+        <div
+          className="popup-overlay"
+          onClick={() => setSelectedLine(null)}
+        >
+          <div
+            ref={instrumentMenuRef}
+            className="combined-selection-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
           <button onClick={() => setSelectedLine(null)} className="close-modal-button top-left">
             <img src={quitIcon} alt="Close" className="iconQuit" />
           </button>
@@ -2024,6 +2042,7 @@ const CanvasComponent = () => {
               </div>
             ))}
           </div>
+        </div>
         </div>
       )}
 

@@ -629,6 +629,11 @@ const CanvasComponent = () => {
     setIsClearScreenPopupVisible(false); // Hide the pop-up
   };
 
+  const exitEditMode = () => { // added - Renee
+    setIsEditMode(false);
+    setSelectedLine(null);
+  }
+
   useEffect(() => {
     const loadSounds = async () => {
       await preloadSounds(); // Preload sounds
@@ -1613,6 +1618,7 @@ const CanvasComponent = () => {
                 onMouseUp={handleMouseUp} // Clear timer on release
                 onMouseLeave={handleMouseUp} // Clear timer if the mouse leaves the button
                 onClick={() => {
+                  if(isEditMode) exitEditMode(); // added - Renee
                   setCurrentColor(slot); // Set the selected slot
                   setIsEraser(false);    // Deactivate eraser
                   setIsTrash(false);     // Deactivate trash
@@ -1628,7 +1634,11 @@ const CanvasComponent = () => {
               {/* Instrument button */}
               <button
                 className="instrument-select-button"
-                onClick={() => openInstrumentMenu(slot)}
+                // onClick={() => openInstrumentMenu(slot)}
+                onClick={() => { // added - Renee
+                  if(isEditMode) exitEditMode();
+                  openInstrumentMenu(slot);
+                }}
               >
                 <img src={GearIcon} alt="Settings Button" className="iconGear" />
               </button>
@@ -1670,7 +1680,13 @@ const CanvasComponent = () => {
           </button> */}
           <button
             className={`edit-button ${isEditMode ? 'active' : ''}`}
-            onClick={() => setIsEditMode(!isEditMode)} // Toggle Edit Mode
+            // onClick={() => setIsEditMode(!isEditMode)} // Toggle Edit Mode
+            onClick={() => { // changed - Renee
+              setIsEditMode(prev => {
+                if(prev) setSelectedLine(null);
+                return !prev
+              });
+            }}
           >
             <img src={EditIcon} alt="Edit" className="iconEdit" />
           </button>
@@ -1679,6 +1695,7 @@ const CanvasComponent = () => {
             className={`trash-button ${isTrash ? 'active' : ''}`}
             // onClick={() => setIsTrash(!isTrash)}
             onClick={() => {
+              if(isEditMode) exitEditMode(); // added - Renee
               if (isTrash) {
                 // If eraser is already on, turn it off and restore the previous color
                 setCurrentColor(previousColor);
@@ -1809,7 +1826,13 @@ const CanvasComponent = () => {
             <img src={GridIcon} alt="Grid Icon" className="iconGrid" />
           </button>
 
-          <button className="clean-button" onClick={handleClearScreen}>
+          <button
+            className="clean-button"
+            onClick={() => {
+              if (isEditMode) exitEditMode();
+              handleClearScreen();
+            }}
+          >
             <img src={CleanIcon} alt="Clean Icon" className="iconClean" />
           </button>
 
@@ -1899,7 +1922,13 @@ const CanvasComponent = () => {
         </button>
         <div className="settings-options-grid">
           <div className="settings-option">
-            <button className="clean-button" onClick={handleClearScreen}>
+            <button
+              className="clean-button"
+              onClick={() => {
+                if (isEditMode) exitEditMode();
+                handleClearScreen();
+              }}
+            >
               <img src={CleanIcon} alt="Clean Icon" className="iconClean" />
             </button>
             <span className="settings-label">Clean Canvas</span>

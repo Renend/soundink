@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import './interface.css'; // Importing the associated CSS file for styles
-import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, LoopIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, NoLoopIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, numDotsX, numDotsY, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
+import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, numDotsX, numDotsY, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
 import { mapNoteToSampleNumber, scales } from './soundMappings';
 import { Canvg } from 'canvg';
 import pointInPolygon from 'point-in-polygon'; // Import the library
@@ -26,7 +26,7 @@ const CanvasComponent = () => {
   const intersectedDots = useRef({}); // Ref to track intersected dots
   const [showGrid, setShowGrid] = useState(true); // Add state to control grid visibility
   const [isPlaying, setIsPlaying] = useState(false); // To control playback state
-  const [loop, setLoop] = useState(true); // To control looping
+  // const [loop, setLoop] = useState(true); // To control looping
   let playbackStopped = useRef(false); // To stop playback externally
   const [scannedColumn, setScannedColumn] = useState(-1);
   const [previousColor, setPreviousColor] = useState(colors[0]);
@@ -111,7 +111,7 @@ const CanvasComponent = () => {
 
   // Inside your component
   const colorInstrumentMapRef = useRef(colorInstrumentMap); // Create a ref for instrument mappings
-  const loopRef = useRef(loop); // Create a ref for loop
+  // const loopRef = useRef(loop); // Create a ref for loop
   const playbackSpeedRef = useRef(playbackSpeed);
   const playStopButtonRef = useRef(null);
 
@@ -739,9 +739,9 @@ const CanvasComponent = () => {
   }, [playbackSpeed]);
 
   // Update these refs whenever the state changes
-  useEffect(() => {
-    loopRef.current = loop;
-  }, [loop]);
+  // useEffect(() => {
+  //   loopRef.current = loop;
+  // }, [loop]);
 
   useEffect(() => {
     const preventSelection = (e) => {
@@ -1339,7 +1339,7 @@ const CanvasComponent = () => {
         column = 0;
 
         // Stop playback if looping is disabled
-        if (!loopRef.current) break;
+        // if (!loopRef.current) break;
       }
 
       setCurrentColumn(column); // Update the scanned column
@@ -1787,7 +1787,7 @@ const CanvasComponent = () => {
         </div>
 
         {/* Loop & Scale Control */}
-        <div className="loop-scale-group">
+        {/* <div className="loop-scale-group">
           <button
             className={`loop-button ${loop ? 'active' : 'inactive'}`}
             onClick={() => setLoop(!loop)}
@@ -1808,6 +1808,39 @@ const CanvasComponent = () => {
               className="scale-icon"
             />
           </button>
+        </div> */}
+        {/* <div className="loop-scale-group">
+          <button
+            className="scale-button"
+            onClick={() => setIsScaleMenuOpen(true)}
+          >
+            <img
+              src={scaleIcons[currentScale]}
+              alt={`${currentScale} icon`}
+              className="scale-icon"
+            />
+          </button>
+        </div> */}
+
+        {/* Grid + Scale Row */}
+        <div className="grid-scale-row">
+          <button
+            className="grid-button"
+            onClick={toggleGrid}
+          >
+            <img src={GridIcon} alt="Grid Icon" className="iconGrid" />
+          </button>
+
+          <button
+            className="scale-button"
+            onClick={() => setIsScaleMenuOpen(true)}
+          >
+            <img
+              src={scaleIcons[currentScale]}
+              alt={`${currentScale} icon`}
+              className="scale-icon"
+            />
+          </button>
         </div>
 
         {/* Undo and Redo Buttons */}
@@ -1821,7 +1854,7 @@ const CanvasComponent = () => {
         </div>
 
         {/* Toggle Grid Visibility Button */}
-        <div className="grid-group">
+        {/* <div className="grid-group">
           <button className="grid-button" onClick={toggleGrid}>
             <img src={GridIcon} alt="Grid Icon" className="iconGrid" />
           </button>
@@ -1836,7 +1869,7 @@ const CanvasComponent = () => {
             <img src={CleanIcon} alt="Clean Icon" className="iconClean" />
           </button>
 
-        </div>
+        </div> */}
 
         <div className="load-save-group">
           <button className="save-button" onClick={handleSaveDrawing}>
@@ -1922,7 +1955,7 @@ const CanvasComponent = () => {
         </button>
         <div className="settings-options-grid">
           <div className="settings-option">
-            <button
+            {/* <button
               className="clean-button"
               onClick={() => {
                 if (isEditMode) exitEditMode();
@@ -1930,7 +1963,7 @@ const CanvasComponent = () => {
               }}
             >
               <img src={CleanIcon} alt="Clean Icon" className="iconClean" />
-            </button>
+            </button> */}
             <span className="settings-label">Clean Canvas</span>
           </div>
         </div>

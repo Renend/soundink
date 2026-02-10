@@ -221,7 +221,8 @@ button {
 .play-group,
 .edit-container,
 .load-save-group,
-.scale-container {
+.scale-container,
+.grid-scale-row {
   display: flex;
   /* Arrange buttons horizontally */
   gap: 0.5vw;
@@ -257,10 +258,10 @@ button {
   margin-bottom: 10px;
 }
 
-.loop-scale-group {
+/* .loop-scale-group {
   margin-top: 0px;
   margin-bottom: 10px !important;
-}
+} */
 
 /* .color-button, */
 .instrument-select-button,
@@ -269,10 +270,8 @@ button {
 .undo,
 .redo,
 .grid-button,
-.clean-button,
 .settings-button,
 .edit-button,
-.loop-button,
 .save-button,
 .load-button,
 .scale-button {
@@ -339,9 +338,7 @@ button {
 .trash-button:hover,
 .undo:hover, .redo:hover,
 .play-stop-button:hover,
-.loop-button:hover,
 .grid-button:hover,
-.clean-button:hover,
 .settings-button:hover,
 .edit-button:hover,
 .stop-mode:hover,
@@ -362,11 +359,9 @@ button {
 
 
 .grid-button:active,
-.clean-button:active,
 .settings-button:active,
 .edit-button:active,
 .scale-button:active,
-.loop-button:active,
 .play-stop-button:active,
 .undo:active,
 .redo:active,
@@ -384,7 +379,6 @@ button {
   .eraser-container,
   .steps-group,
   .edit-container,
-  .loop-scale-group,
   .grid-group,
   .save-load-buttons,
   .play-group,
@@ -435,10 +429,10 @@ button {
     box-shadow 0.6s cubic-bezier(0.42, 0, 0.58, 1); /* Smooth ease-out for shadow */
 }
 
-.loop-scale-group {
+/* .loop-scale-group {
   margin-top: 0px;
   margin-bottom: 0px;
-}
+} */
 
 
 .play-stop-button {
@@ -577,8 +571,6 @@ button {
 .iconPlay,
 .iconDo,
 .iconStop,
-.iconLoop,
-.noLoop,
 .iconGrid,
 .iconGear,
 .iconClean,
@@ -632,9 +624,9 @@ button {
   transform: scale(0.7);
 }
 
-.iconLoop, .noLoop {
+/* .iconLoop, .noLoop {
   transform: scale(0.9);
-}
+} */
 
 .scale-option-icon {
   transform: scale(1);
@@ -652,8 +644,6 @@ button:hover .iconClean,
 button:hover .iconQuit,
 button:hover .iconEraser, button.active .iconEraser,
 button:hover .iconTrash, button.active .iconTrash,
-button:hover .iconLoop, 
-button:hover .noLoop, button.active .noLoop,
 button:hover .scale-icon, button:hover .scale-option-icon {
   stroke: var(--shadowColor);
   stroke-width: 2px;

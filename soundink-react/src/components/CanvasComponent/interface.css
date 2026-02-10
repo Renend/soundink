@@ -1665,6 +1665,14 @@ button:hover .instrument-sidebar-icon {
   cursor: pointer;
 }
 
+.color-option.active {
+  box-shadow: 
+    0 0 5px var(--shadowBorder),
+    0 0 3px var(--shadowColor),
+    0 0 5px var(--shadowColor),
+    0 0 7px var(--shadowColor);
+}
+
 .color-option:hover {
   transform: scale(1.1);
 }
@@ -1680,6 +1688,15 @@ button:hover .instrument-sidebar-icon {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.instrument-option-button.active {
+  border: 1px solid var(--shadowBorder);
+  box-shadow: 
+    0 0 5px var(--shadowBorder),
+    0 0 3px var(--shadowColor),
+    0 0 5px var(--shadowColor),
+    0 0 7px var(--shadowColor);
 }
 
 .instrument-option-button:hover {

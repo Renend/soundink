@@ -1988,7 +1988,10 @@ const CanvasComponent = () => {
                   key={`${rowIndex}-${colIndex}`}
                   style={{ backgroundColor: color }}
                   // style={{ borderColor: color }}
-                  className="color-option"
+                  // className="color-option"
+                  className={`color-option ${ // changed - Renee
+                    colorSlots[selectedSlot] === color ? 'active' : ''
+                  }`}
                   onClick={() => {
                     updateColorForSlot(selectedSlot, color); 
                   }}
@@ -2002,7 +2005,9 @@ const CanvasComponent = () => {
               <div key={index} className="instrument-option-cell">
                 <button
                   onClick={() => updateInstrumentForColor(instrument)}
-                  className="instrument-option-button"
+                  className={`instrument-option-button ${ // changed - Renee
+                    colorInstrumentMap[selectedSlot] === instrument ? 'active' : ''
+                  }`}
                 >
                   <img
                     src={instrumentIcons[instrument]}
@@ -2042,7 +2047,10 @@ const CanvasComponent = () => {
                   key={`${rowIndex}-${colIndex}`}
                   style={{ backgroundColor: color }}
                   // style={{ borderColor: color }}
-                  className="color-option"
+                  // className="color-option"
+                  className={`color-option ${
+                    selectedLine.color === color ? 'active' : ''
+                  }`}
                   onClick={() => {
                     updateLineColor(selectedLine, color); // Update the line's color
                   }}

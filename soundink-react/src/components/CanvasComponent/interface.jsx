@@ -67,7 +67,8 @@ const CanvasComponent = () => {
   const [intersectedDotsState, setIntersectedDotsState] = useState({});
   const [wasDragged, setWasDragged] = useState(false); // Tracks if the pointer was dragged
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
-
+  const lastClickTimeRef = useRef(0); // Added - Renee - for double click in edit view
+  const DOUBLE_CLICK_DELAY = 300; // Added - Renee
 
   // State to hold instrument assignment for each color
   const [colorInstrumentMap, setColorInstrumentMap] = useState({
@@ -1202,8 +1203,20 @@ const CanvasComponent = () => {
         })
       );
   
-      if (clickedLine) {
-        setSelectedLine(clickedLine); // Set the clicked line as the selected line
+      // if (clickedLine) {
+      //   setSelectedLine(clickedLine); // Set the clicked line as the selected line
+      // }
+
+      // Changed - Renee - for double clicking
+      if(clickedLine) {
+        const now = Date.now();
+        const timeSinceLastClick = now - lastClickTimeRef.current;
+
+        if(timeSinceLastClick < DOUBLE_CLICK_DELAY) {
+          setSelectedLine(clickedLine);
+        }
+
+        lastClickTimeRef.current = now;
       }
     }
 
@@ -1569,12 +1582,31 @@ const CanvasComponent = () => {
 
   const allStrokes = lines.map((line, index) => {
     const strokeOptions = { ...options, size: line.size };
+
+    // Added - Renee
+    const pathData = getSvgPathFromStroke(getStroke(line.points, strokeOptions));
+
+    const isHighlighted = (selectedLine && selectedLine.lineId === line.lineId) ||
+      (draggedLine && draggedLine.lineId === line.lineId);
+
+    // changed - Renee
     return (
-      <path
-        key={index}
-        d={getSvgPathFromStroke(getStroke(line.points, strokeOptions))}
-        fill={line.color}
-      />
+      <g key={index}>
+        {isHighlighted && (
+          <path
+            d={pathData}
+            fill="none"
+            stroke={line.highlightColor}
+            strokeWidth={line.size + 14}
+            opacity="0.5"
+          />
+        )}
+
+        <path
+          d={pathData}
+          fill={line.color}
+        />
+      </g>
     );
   });
 
@@ -1618,7 +1650,7 @@ const CanvasComponent = () => {
                 onMouseUp={handleMouseUp} // Clear timer on release
                 onMouseLeave={handleMouseUp} // Clear timer if the mouse leaves the button
                 onClick={() => {
-                  if(isEditMode) exitEditMode(); // added - Renee
+                  setIsEditMode(false); // leave edit
                   setCurrentColor(slot); // Set the selected slot
                   setIsEraser(false);    // Deactivate eraser
                   setIsTrash(false);     // Deactivate trash
@@ -1683,8 +1715,16 @@ const CanvasComponent = () => {
             // onClick={() => setIsEditMode(!isEditMode)} // Toggle Edit Mode
             onClick={() => { // changed - Renee
               setIsEditMode(prev => {
-                if(prev) setSelectedLine(null);
-                return !prev
+                const newState = !prev;
+
+                if(newState) {
+                  setIsTrash(false); // turn off trash
+                  setIsEraser(false); // just in case
+                } else {
+                  setSelectedLine(null);
+                }
+
+                return newState;
               });
             }}
           >

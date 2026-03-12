@@ -54,7 +54,6 @@ const CanvasComponent = () => {
   const [activeColorSlot, setActiveColorSlot] = useState(null); // Tracks the slot for which the palette is open
   const colorPaletteRef = useRef(null); // Ref for the color palette modal
 
-  // Add this at the top of your component, along with other state variables
   const [selectedColor, setSelectedColor] = useState(null); // Track the color for which the modal is shown
   const [selectedSlot, setSelectedSlot] = useState(null); // Track the selected slot for the combined menu
   const [isEditMode, setIsEditMode] = useState(false); // Tracks if Edit Mode is active
@@ -68,9 +67,14 @@ const CanvasComponent = () => {
   const [intersectedDotsState, setIntersectedDotsState] = useState({});
   const [wasDragged, setWasDragged] = useState(false); // Tracks if the pointer was dragged
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
-  const lastClickTimeRef = useRef(0); // Added - Renee - for double click in edit view
-  const DOUBLE_CLICK_DELAY = 300; // Added - Renee
 
+  const [selectedLineIds, setSelectedLineIds] = useState([]);
+  const [isSweepSelecting, setIsSweepSelecting] = useState(false);
+  const [selectionTrail, setSelectionTrail] = useState([]);
+  const [draggedLineIds, setDraggedLineIds] = useState([]);
+
+  const originalDraggedLinesPointsRef = useRef({});
+  
   // State to hold instrument assignment for each color
   const [colorInstrumentMap, setColorInstrumentMap] = useState({
     color1: 'piano',
@@ -631,9 +635,14 @@ const CanvasComponent = () => {
     setIsClearScreenPopupVisible(false); // Hide the pop-up
   };
 
-  const exitEditMode = () => { // added - Renee
+  const exitEditMode = () => { // exits edit mode and resets all edit state
     setIsEditMode(false);
     setSelectedLine(null);
+    setSelectedLineIds([]);
+    setDraggedLineIds([]);
+    setIsDragging(false);
+    setIsSweepSelecting(false);
+    setSelectionTrail([]);
   }
 
   useEffect(() => {
@@ -925,6 +934,66 @@ const CanvasComponent = () => {
     }
   };
 
+  const getLineAtPoint = (clickPoint) => {
+    return [...lines].reverse().find((line) =>
+      !line.isEraser &&
+      line.points.some((startPoint, index) => {
+        if (index === line.points.length - 1) return false;
+        const endPoint = line.points[index + 1];
+        return isPointNearLineSegment(
+          clickPoint,
+          startPoint,
+          endPoint,
+          line.size
+        );
+      })
+    );
+  };
+
+  const lineTouchesSweepPath = (line, pathPoints) => {
+    if (!pathPoints || pathPoints.length < 2) return false;
+
+    for (let i = 0; i < pathPoints.length - 1; i++) {
+      const sweepStart = pathPoints[i];
+      const sweepEnd = pathPoints[i + 1];
+
+      for (let j = 0; j < line.points.length - 1; j++) {
+        const start = line.points[j];
+        const end = line.points[j + 1];
+
+        if (isPointNearLineSegment(sweepStart, start, end, line.size + 12) ||
+          isPointNearLineSegment(sweepEnd, start, end, line.size + 12)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  const rebuildDraggedLineIntersections = (updatedLines, movedLineIds) => {
+    const updatedIntersectedDots = { ...intersectedDots.current };
+
+    for (const column in updatedIntersectedDots) {
+      for (const row in updatedIntersectedDots[column]) {
+        if (movedLineIds.includes(updatedIntersectedDots[column][row].lineId)) {
+          delete updatedIntersectedDots[column][row];
+        }
+      }
+    }
+
+    const spatialHash = createSpatialHash(gridConfig);
+    movedLineIds.forEach((lineId) => {
+      const movedLine = updatedLines.find((line) => line.lineId === lineId);
+      if (movedLine) {
+        calculateIntersections(movedLine, gridConfig, updatedIntersectedDots, spatialHash);
+      }
+    });
+
+    intersectedDots.current = updatedIntersectedDots;
+    setIntersectedDotsState({ ...updatedIntersectedDots });
+  };
+
   // Called when user starts drawing (pointer down)
   const handlePointerDown = (e) => {
     setWasDragged(false); // Reset the dragging flag
@@ -941,45 +1010,91 @@ const CanvasComponent = () => {
     clickPointRef.current = clickPoint; // Store the clickPoint in the ref
 
     if (isEditMode) {
-      // const clickedLine = lines.find((line) =>
-      const clickedLine = [...lines].reverse().find((line) =>
-        !line.isEraser && // Ignore eraser lines
-        line.points.some((startPoint, index) => {
-          if (index === line.points.length - 1) return false; // Skip the last point
-          const endPoint = line.points[index + 1];
-          return isPointNearLineSegment(
-            clickPoint,
-            startPoint,
-            endPoint,
-            line.size // Include the stroke width in the calculation
-          );
-        })
-      );
-  
-      if (clickedLine) {
-        // Find the closest point on the line to the click point
-        let closestPoint = null;
-        let minDistance = Infinity;
-  
-        clickedLine.points.forEach((startPoint, index) => {
-          if (index === clickedLine.points.length - 1) return; // Skip the last point
-          const endPoint = clickedLine.points[index + 1];
-          const pointOnSegment = getClosestPointOnSegment(clickPoint, startPoint, endPoint);
-          const distance = Math.hypot(pointOnSegment[0] - clickPoint[0], pointOnSegment[1] - clickPoint[1]);
-  
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = pointOnSegment;
+      const clickedLine = getLineAtPoint(clickPoint);
+
+    if (clickedLine) {
+
+      let idsToDrag;
+
+      if (selectedLineIds.includes(clickedLine.lineId)) {
+        // drag the existing group
+        idsToDrag = selectedLineIds;
+      } else {
+        // clicked a new stroke - clear previous selection
+        setSelectedLineIds([]);
+        idsToDrag = [clickedLine.lineId];
+      }
+
+      setDraggedLine(clickedLine);
+      setDraggedLineIds(idsToDrag);
+
+        setIsDragging(true);
+        setInitialDragPoint(clickPoint);
+        setWasDragged(false);
+
+        originalDraggedLinesPointsRef.current = {};
+        idsToDrag.forEach((lineId) => {
+          const line = lines.find((l) => l.lineId === lineId);
+          if (line) {
+            originalDraggedLinesPointsRef.current[lineId] =
+              line.points.map(([x, y]) => [x, y]);
           }
         });
-  
-        setDraggedLine(clickedLine); // Set the clicked line as the dragged line
-        setOriginalLinePoints(clickedLine.points); // Store the original points of the line
-        setIsDragging(true); // Enable dragging
-        setDragOffset([clickPoint[0] - closestPoint[0], clickPoint[1] - closestPoint[1]]); // Calculate the offset
-        setInitialDragPoint(clickPoint); // Store the initial cursor position
+      } else {
+        // empty space in edit mode:
+        // start sweep selection and clear old selection
+        setSelectedLine(null);
+        setDraggedLine(null);
+        setDraggedLineIds([]);
+        setSelectedLineIds([]);
+        setIsSweepSelecting(true);
+        setSelectionTrail([clickPoint]);
+        setWasDragged(false);
       }
+
+      return;
     }
+
+    // if (isEditMode) {
+    //   // const clickedLine = lines.find((line) =>
+    //   const clickedLine = [...lines].reverse().find((line) =>
+    //     !line.isEraser && // Ignore eraser lines
+    //     line.points.some((startPoint, index) => {
+    //       if (index === line.points.length - 1) return false; // Skip the last point
+    //       const endPoint = line.points[index + 1];
+    //       return isPointNearLineSegment(
+    //         clickPoint,
+    //         startPoint,
+    //         endPoint,
+    //         line.size // Include the stroke width in the calculation
+    //       );
+    //     })
+    //   );
+  
+    //   if (clickedLine) {
+    //     // Find the closest point on the line to the click point
+    //     let closestPoint = null;
+    //     let minDistance = Infinity;
+  
+    //     clickedLine.points.forEach((startPoint, index) => {
+    //       if (index === clickedLine.points.length - 1) return; // Skip the last point
+    //       const endPoint = clickedLine.points[index + 1];
+    //       const pointOnSegment = getClosestPointOnSegment(clickPoint, startPoint, endPoint);
+    //       const distance = Math.hypot(pointOnSegment[0] - clickPoint[0], pointOnSegment[1] - clickPoint[1]);
+  
+    //       if (distance < minDistance) {
+    //         minDistance = distance;
+    //         closestPoint = pointOnSegment;
+    //       }
+    //     });
+  
+    //     setDraggedLine(clickedLine); // Set the clicked line as the dragged line
+    //     setOriginalLinePoints(clickedLine.points); // Store the original points of the line
+    //     setIsDragging(true); // Enable dragging
+    //     setDragOffset([clickPoint[0] - closestPoint[0], clickPoint[1] - closestPoint[1]]); // Calculate the offset
+    //     setInitialDragPoint(clickPoint); // Store the initial cursor position
+    //   }
+    // }
 
     if (isEditMode) {
       return; // Block drawing when Edit Mode is active
@@ -1043,51 +1158,104 @@ const CanvasComponent = () => {
 
   const handlePointerMove = (e) => {
 
-    // Handle line dragging in Edit Mode
-    if (isDragging && draggedLine && originalLinePoints && initialDragPoint) {
-      setWasDragged(true); // Mark as dragged
-      const canvasRect = svgRef.current.getBoundingClientRect();
-      const currentPoint = [e.clientX - canvasRect.left, e.clientY - canvasRect.top];
+    if (isEditMode) {
+      // const canvasRect = svgRef.current.getBoundingClientRect();
+      // const currentPoint = [e.clientX - canvasRect.left, e.clientY - canvasRect.top];
+      const container = document.querySelector('.canvas-container');
+      const containerRect = container.getBoundingClientRect();
+      const currentPoint = [e.clientX - containerRect.left, e.clientY - containerRect.top];
 
-      // Calculate the offset relative to the initial drag point
-      const offsetX = currentPoint[0] - initialDragPoint[0];
-      const offsetY = currentPoint[1] - initialDragPoint[1];
+      if (isDragging && draggedLineIds.length > 0 && initialDragPoint) {
+        setWasDragged(true);
 
-      // Update the position of the dragged line
-      const updatedLines = lines.map((line) =>
-        line.lineId === draggedLine.lineId
-          ? {
-              ...line,
-              points: originalLinePoints.map(([x, y]) => [x + offsetX, y + offsetY]),
-            }
-          : line
-      );
+        const offsetX = currentPoint[0] - initialDragPoint[0];
+        const offsetY = currentPoint[1] - initialDragPoint[1];
 
-      setLines(updatedLines);
+        const updatedLines = lines.map((line) => {
+          if (!draggedLineIds.includes(line.lineId)) return line;
 
-      // Recalculate intersections for the dragged line
-      const updatedIntersectedDots = { ...intersectedDots.current };
+          const originalPoints = originalDraggedLinesPointsRef.current[line.lineId];
+          return {
+            ...line,
+            points: originalPoints.map(([x, y]) => [x + offsetX, y + offsetY]),
+          };
+        });
 
-      // Clear old intersections for the dragged line
-      for (const column in updatedIntersectedDots) {
-        for (const row in updatedIntersectedDots[column]) {
-          if (updatedIntersectedDots[column][row].lineId === draggedLine.lineId) {
-            delete updatedIntersectedDots[column][row];
-          }
-        }
+        setLines(updatedLines);
+        rebuildDraggedLineIntersections(updatedLines, draggedLineIds);
+        return;
       }
 
-      // Recalculate intersections for the new position of the dragged line
-      const spatialHash = createSpatialHash(gridConfig);
-      const updatedDraggedLine = updatedLines.find((line) => line.lineId === draggedLine.lineId);
-      calculateIntersections(updatedDraggedLine, gridConfig, updatedIntersectedDots, spatialHash);
+      if (isSweepSelecting) {
+        setWasDragged(true);
 
-      // Update the intersectedDots reference and trigger a re-render
-      intersectedDots.current = updatedIntersectedDots;
-      // setIntersectedDotsState({ ...updatedIntersectedDots });
+        setSelectionTrail((prevTrail) => {
+          const nextTrail = prevTrail.length > 20
+            ? [...prevTrail.slice(-40), currentPoint]
+            : [...prevTrail, currentPoint];
+          
+          setSelectedLineIds(prevSelected => {
+            const touchedIds = lines
+              .filter((line) => lineTouchesSweepPath(line, nextTrail))
+              .map((line) => line.lineId);
 
-      return; // Exit early to avoid processing other modes
+            return [...new Set([...prevSelected, ...touchedIds])];
+          });
+
+          return nextTrail;
+        });
+
+        return;
+      }
+
+      return;
     }
+
+    // // Handle line dragging in Edit Mode
+    // if (isDragging && draggedLine && originalLinePoints && initialDragPoint) {
+    //   setWasDragged(true); // Mark as dragged
+    //   const canvasRect = svgRef.current.getBoundingClientRect();
+    //   const currentPoint = [e.clientX - canvasRect.left, e.clientY - canvasRect.top];
+
+    //   // Calculate the offset relative to the initial drag point
+    //   const offsetX = currentPoint[0] - initialDragPoint[0];
+    //   const offsetY = currentPoint[1] - initialDragPoint[1];
+
+    //   // Update the position of the dragged line
+    //   const updatedLines = lines.map((line) =>
+    //     line.lineId === draggedLine.lineId
+    //       ? {
+    //           ...line,
+    //           points: originalLinePoints.map(([x, y]) => [x + offsetX, y + offsetY]),
+    //         }
+    //       : line
+    //   );
+
+    //   setLines(updatedLines);
+
+    //   // Recalculate intersections for the dragged line
+    //   const updatedIntersectedDots = { ...intersectedDots.current };
+
+    //   // Clear old intersections for the dragged line
+    //   for (const column in updatedIntersectedDots) {
+    //     for (const row in updatedIntersectedDots[column]) {
+    //       if (updatedIntersectedDots[column][row].lineId === draggedLine.lineId) {
+    //         delete updatedIntersectedDots[column][row];
+    //       }
+    //     }
+    //   }
+
+    //   // Recalculate intersections for the new position of the dragged line
+    //   const spatialHash = createSpatialHash(gridConfig);
+    //   const updatedDraggedLine = updatedLines.find((line) => line.lineId === draggedLine.lineId);
+    //   calculateIntersections(updatedDraggedLine, gridConfig, updatedIntersectedDots, spatialHash);
+
+    //   // Update the intersectedDots reference and trigger a re-render
+    //   intersectedDots.current = updatedIntersectedDots;
+    //   // setIntersectedDotsState({ ...updatedIntersectedDots });
+
+    //   return; // Exit early to avoid processing other modes
+    // }
 
     if (isEditMode) {
       return; // Block all drawing-related logic when Edit Mode is active
@@ -1181,53 +1349,97 @@ const CanvasComponent = () => {
   };
 
   const handlePointerUp = () => {
-    if (!wasDragged && isEditMode) {
 
-      // Use the clickPoint stored in the ref
+    if (isEditMode) {
       const clickPoint = clickPointRef.current;
+      const clickedLine = clickPoint ? getLineAtPoint(clickPoint) : null;
 
-      if (!clickPoint) return; // Ensure clickPoint is defined
+      if (isSweepSelecting) {
+        setIsSweepSelecting(false);
+        setSelectionTrail([]);
 
-      // Check if the click intersects with any line
-      // const clickedLine = lines.find((line) =>
-      const clickedLine = [...lines].reverse().find((line) =>
-        !line.isEraser && // Ignore eraser lines
-        line.points.some((startPoint, index) => {
-          if (index === line.points.length - 1) return false; // Skip the last point
-          const endPoint = line.points[index + 1];
-          return isPointNearLineSegment(
-            clickPoint,
-            startPoint,
-            endPoint,
-            line.size // Include the stroke width in the calculation
-          );
-        })
-      );
-  
-      // if (clickedLine) {
-      //   setSelectedLine(clickedLine); // Set the clicked line as the selected line
-      // }
+        // click on empty space without dragging = unselect all
+        if (!wasDragged) {
+          setSelectedLineIds([]);
+          setSelectedLine(null);
+        }
+        return;
+      }
 
-      // Changed - Renee - for double clicking
-      if(clickedLine) {
-        const now = Date.now();
-        const timeSinceLastClick = now - lastClickTimeRef.current;
+      if (isDragging) {
+        setIsDragging(false);
+        setDraggedLine(null);
+        setDraggedLineIds([]);
+        originalDraggedLinesPointsRef.current = {};
 
-        if(timeSinceLastClick < DOUBLE_CLICK_DELAY) {
+        // If the pointer didn't move, treat it as a click
+        if (!wasDragged && clickedLine) {
+          setSelectedLineIds([]);
           setSelectedLine(clickedLine);
         }
 
-        lastClickTimeRef.current = now;
+        return;
       }
-    }
 
-    if (isDragging && draggedLine) {
-      setIntersectedDotsState({ ...intersectedDots.current });
-      // Reset dragging state
-      setIsDragging(false);
-      setDraggedLine(null);
-      setOriginalLinePoints(null); // Clear the original points
+      if (!wasDragged) {
+        if (clickedLine) {
+          setSelectedLineIds([]);
+          setSelectedLine(clickedLine);
+        } else {
+          setSelectedLineIds([]);
+          setSelectedLine(null);
+        }
+      }
+
+      return;
     }
+    // if (!wasDragged && isEditMode) {
+
+    //   // Use the clickPoint stored in the ref
+    //   const clickPoint = clickPointRef.current;
+
+    //   if (!clickPoint) return; // Ensure clickPoint is defined
+
+    //   // Check if the click intersects with any line
+    //   // const clickedLine = lines.find((line) =>
+    //   const clickedLine = [...lines].reverse().find((line) =>
+    //     !line.isEraser && // Ignore eraser lines
+    //     line.points.some((startPoint, index) => {
+    //       if (index === line.points.length - 1) return false; // Skip the last point
+    //       const endPoint = line.points[index + 1];
+    //       return isPointNearLineSegment(
+    //         clickPoint,
+    //         startPoint,
+    //         endPoint,
+    //         line.size // Include the stroke width in the calculation
+    //       );
+    //     })
+    //   );
+  
+    //   // if (clickedLine) {
+    //   //   setSelectedLine(clickedLine); // Set the clicked line as the selected line
+    //   // }
+
+    //   // Changed - Renee - for double clicking
+    //   if(clickedLine) {
+    //     const now = Date.now();
+    //     const timeSinceLastClick = now - lastClickTimeRef.current;
+
+    //     if(timeSinceLastClick < DOUBLE_CLICK_DELAY) {
+    //       setSelectedLine(clickedLine);
+    //     }
+
+    //     lastClickTimeRef.current = now;
+    //   }
+    // }
+
+    // if (isDragging && draggedLine) {
+    //   setIntersectedDotsState({ ...intersectedDots.current });
+    //   // Reset dragging state
+    //   setIsDragging(false);
+    //   setDraggedLine(null);
+    //   setOriginalLinePoints(null); // Clear the original points
+    // }
 
     if (isTrash) {
       //TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING
@@ -1587,8 +1799,11 @@ const CanvasComponent = () => {
     // Added - Renee
     const pathData = getSvgPathFromStroke(getStroke(line.points, strokeOptions));
 
-    const isHighlighted = isEditMode && (selectedLine && selectedLine.lineId === line.lineId) ||
-      (draggedLine && draggedLine.lineId === line.lineId);
+    const isHighlighted =
+      isEditMode && (selectedLineIds.includes(line.lineId) ||
+        draggedLineIds.includes(line.lineId) ||
+        (selectedLine && selectedLine.lineId === line.lineId)
+      );
 
     // changed - Renee
     return (
@@ -1598,7 +1813,7 @@ const CanvasComponent = () => {
             d={pathData}
             fill="none"
             stroke={line.highlightColor}
-            strokeWidth={line.size + 8}
+            strokeWidth={12}
             opacity="0.5"
           />
         )}
@@ -1651,7 +1866,7 @@ const CanvasComponent = () => {
                 onMouseUp={handleMouseUp} // Clear timer on release
                 onMouseLeave={handleMouseUp} // Clear timer if the mouse leaves the button
                 onClick={() => {
-                  setIsEditMode(false); // leave edit
+                  exitEditMode() // leave edit
                   setCurrentColor(slot); // Set the selected slot
                   setIsEraser(false);    // Deactivate eraser
                   setIsTrash(false);     // Deactivate trash
@@ -1727,7 +1942,8 @@ const CanvasComponent = () => {
                   setCurrentColor(previousToolStateRef.current.currentColor);
                   setIsTrash(previousToolStateRef.current.isTrash);
                   setIsEraser(previousToolStateRef.current.isEraser);
-                  setSelectedLine(null);
+
+                  exitEditMode();
                 }
 
                 return newState;

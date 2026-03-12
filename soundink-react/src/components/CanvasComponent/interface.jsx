@@ -16,6 +16,7 @@ const CanvasComponent = () => {
   const [currentLine, setCurrentLine] = useState([]); // Current line being drawn
   const [currentColor, setCurrentColor] = useState('color1'); // Currently selected brush color
   const [currentSize, setCurrentSize] = useState(30); // Currently selected brush size
+  const previousToolStateRef = useRef({currentColor: 'color1', isTrash: false, isEraser: false,}); // Track previous state
   const [isEraser, setIsEraser] = useState(false); // Toggle for eraser mode
   const [isTrash, setIsTrash] = useState(false); // Toggle for trash mode
   const [isPointerDown, setIsPointerDown] = useState(false);
@@ -1586,7 +1587,7 @@ const CanvasComponent = () => {
     // Added - Renee
     const pathData = getSvgPathFromStroke(getStroke(line.points, strokeOptions));
 
-    const isHighlighted = (selectedLine && selectedLine.lineId === line.lineId) ||
+    const isHighlighted = isEditMode && (selectedLine && selectedLine.lineId === line.lineId) ||
       (draggedLine && draggedLine.lineId === line.lineId);
 
     // changed - Renee
@@ -1597,7 +1598,7 @@ const CanvasComponent = () => {
             d={pathData}
             fill="none"
             stroke={line.highlightColor}
-            strokeWidth={line.size + 14}
+            strokeWidth={line.size + 8}
             opacity="0.5"
           />
         )}
@@ -1642,7 +1643,7 @@ const CanvasComponent = () => {
             <div key={index} className="color-instrument-pair">
               {/* Color button */}
               <button
-                className={`color-button ${currentColor === slot ? 'active' : ''}`}
+                className={`color-button ${!isEditMode && currentColor === slot ? 'active' : ''}`}
                 // style={{ backgroundColor: colorSlots[slot], position: 'relative' }} // Add relative positioning
                 // style={{ backgroundColor: colorSlots[slot], borderColor: colorSlots[slot] }}
                 style={{ borderColor: colorSlots[slot], border: `12px solid ${colorSlots[slot]}` }}
@@ -1718,9 +1719,14 @@ const CanvasComponent = () => {
                 const newState = !prev;
 
                 if(newState) {
+                  previousToolStateRef.current = {currentColor, isTrash, isEraser};
                   setIsTrash(false); // turn off trash
-                  setIsEraser(false); // just in case
+                  setIsEraser(false);
+                  setSelectedLine(null);
                 } else {
+                  setCurrentColor(previousToolStateRef.current.currentColor);
+                  setIsTrash(previousToolStateRef.current.isTrash);
+                  setIsEraser(previousToolStateRef.current.isEraser);
                   setSelectedLine(null);
                 }
 
@@ -1732,7 +1738,7 @@ const CanvasComponent = () => {
           </button>
 
           <button
-            className={`trash-button ${isTrash ? 'active' : ''}`}
+            className={`trash-button ${!isEditMode && isTrash ? 'active' : ''}`}
             // onClick={() => setIsTrash(!isTrash)}
             onClick={() => {
               if(isEditMode) exitEditMode(); // added - Renee

@@ -1320,8 +1320,13 @@ const CanvasComponent = () => {
 
         // If the pointer didn't move, treat it as a click
         if (!wasDragged && clickedLine) {
-          setSelectedLineIds([]);
-          setSelectedLine(clickedLine);
+          if (selectedLineIds.includes(clickedLine.lineId) && selectedLineIds.length > 1) {
+            // Part of a multiselect — open modal for the group, keep selection
+            setSelectedLine(clickedLine);
+          } else {
+            setSelectedLineIds([]);
+            setSelectedLine(clickedLine);
+          }
         }
 
         return;
@@ -1329,8 +1334,13 @@ const CanvasComponent = () => {
 
       if (!wasDragged) {
         if (clickedLine) {
-          setSelectedLineIds([]);
-          setSelectedLine(clickedLine);
+          if (selectedLineIds.includes(clickedLine.lineId) && selectedLineIds.length > 1) {
+            // Part of a multiselect — open modal for the group, keep selection
+            setSelectedLine(clickedLine);
+          } else {
+            setSelectedLineIds([]);
+            setSelectedLine(clickedLine);
+          }
         } else {
           setSelectedLineIds([]);
           setSelectedLine(null);
@@ -1531,42 +1541,47 @@ const CanvasComponent = () => {
   };
 
   const updateLineColor = (line, newColor) => {
+    const idsToUpdate = (selectedLineIds.length > 1 && selectedLineIds.includes(line.lineId))
+      ? selectedLineIds
+      : [line.lineId];
     setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
     setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
-        l.lineId === line.lineId ? { ...l, color: newColor, highlightColor: newColor } : l
+        idsToUpdate.includes(l.lineId) ? { ...l, color: newColor, highlightColor: newColor } : l
       )
     );
 
     for (const column in intersectedDots.current) {
       for (const row in intersectedDotsState[column]) {
-        if (intersectedDotsState[column][row].lineId === line.lineId) {
-          intersectedDotsState[column][row].color = newColor; // Update the color
+        if (idsToUpdate.includes(intersectedDotsState[column][row].lineId)) {
+          intersectedDotsState[column][row].color = newColor;
         }
       }
     }
-  
+
     setSelectedLine(null); // Close the modal after updating
   };
 
   const updateLineInstrument = (line, newInstrument) => {
+    const idsToUpdate = (selectedLineIds.length > 1 && selectedLineIds.includes(line.lineId))
+      ? selectedLineIds
+      : [line.lineId];
     setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
     setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
-        l.lineId === line.lineId
-          ? { ...l, instrument: newInstrument } // Update the instrument
-          : l
+        idsToUpdate.includes(l.lineId) ? { ...l, instrument: newInstrument } : l
       )
     );
-  
-    // Update the instrument map for the line
-    setIdInstrumentMap((prevMap) => ({
-      ...prevMap,
-      [line.lineId]: newInstrument, // Update the instrument in the map
-    }));
-  
+
+    // Update the instrument map for all affected lines
+    setIdInstrumentMap((prevMap) => {
+      const updates = {};
+      idsToUpdate.forEach((id) => { updates[id] = newInstrument; });
+      return { ...prevMap, ...updates };
+    });
+
     setSelectedLine(null); // Close the modal after updating
   };
 

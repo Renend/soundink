@@ -19,8 +19,6 @@ const CanvasComponent = () => {
   const previousToolStateRef = useRef({currentColor: 'color1', isTrash: false, isEraser: false,}); // Track previous state
   const [isEraser, setIsEraser] = useState(false); // Toggle for eraser mode
   const [isTrash, setIsTrash] = useState(false); // Toggle for trash mode
-  const [isPointerDown, setIsPointerDown] = useState(false);
-  const [trashLinePoints, setTrashLinePoints] = useState([]);
   const [undoStack, setUndoStack] = useState([]); // Stack for undo functionality
   const [redoStack, setRedoStack] = useState([]); // Stack for redo functionality
   const [currentColumn, setCurrentColumn] = useState(-1); // Current column being played back (for visual feedback)
@@ -72,6 +70,8 @@ const CanvasComponent = () => {
   const [selectedLineIds, setSelectedLineIds] = useState([]);
   const [isSweepSelecting, setIsSweepSelecting] = useState(false);
   const [selectionTrail, setSelectionTrail] = useState([]);
+  const [isSweepErasing, setIsSweepErasing] = useState(false);
+  const [eraseTrail, setEraseTrail] = useState([]);
   const [draggedLineIds, setDraggedLineIds] = useState([]);
 
   const originalDraggedLinesPointsRef = useRef({});
@@ -112,7 +112,7 @@ const CanvasComponent = () => {
 
   // Define the available instrument options
   // const instrumentOptions = ['piano', 'marimba', 'bass', 'guitar', 'epiano', 'floom', 'strings', 'synthflute', 'mute'];
-  const instrumentOptions = ['piano', 'marimba', 'bass', 'guitar', 'epiano', 'synthflute', 'mute'];
+  const instrumentOptions = ['piano', 'marimba', 'guitar', 'epiano', 'synthflute', 'mute'];
 
   // Inside your component
   const colorInstrumentMapRef = useRef(colorInstrumentMap); // Create a ref for instrument mappings
@@ -1101,54 +1101,31 @@ const CanvasComponent = () => {
     }
 
     if (isTrash) {
-      setIsPointerDown(true);
-      const { clientX, clientY } = e;
-      // const canvasRect = svgRef.current.getBoundingClientRect();
-      const x = clientX - canvasRect.left;
-      const y = clientY - canvasRect.top;
-      setTrashLinePoints([[x, y]]);
+      const clickedLine = getLineAtPoint(clickPoint);
 
-      // Eraser mode: Check if the click intersects with any line's rendered stroke area
-      const updatedLines = lines.filter((line) => {
-        const isIntersected = line.points.some((startPoint, index) => {
-          if (index === line.points.length - 1) return false; // Skip the last point
-
-          const endPoint = line.points[index + 1];
-          return isPointNearLineSegment(
-            clickPoint,
-            startPoint,
-            endPoint,
-            line.size // Include the stroke width in the calculation
-          );
-        });
-
-        if (isIntersected) {
-          const lineId = line.lineId;
-
-          // Add the erased line to the undo stack
-          setUndoStack((prev) => [...prev, { lines, sonificationPoints }]);
-
-          // Remove intersections from intersectedDots
-          for (const column in intersectedDots.current) {
-            for (const row in intersectedDots.current[column]) {
-              if (intersectedDots.current[column][row].lineId === lineId) {
-                delete intersectedDots.current[column][row];
-              }
+      if (clickedLine) {
+        // Single-click delete: remove the tapped stroke immediately
+        const snapshot = { lines, sonificationPoints };
+        for (const column in intersectedDots.current) {
+          for (const row in intersectedDots.current[column]) {
+            if (intersectedDots.current[column][row].lineId === clickedLine.lineId) {
+              delete intersectedDots.current[column][row];
             }
           }
-
-          // Stop associated sounds
-          stopSoundsForLine(lineId);
         }
-
-        return !isIntersected; // Keep non-erased lines
-      });
-
-      // Update lines and sonification points
-      const remainingSonificationPoints = updatedLines.flatMap((line) => line.sonificationPoints);
-      setLines(updatedLines);
-      setSonificationPoints(remainingSonificationPoints);
-      setRedoStack([]); // Clear redo stack after erasing
+        stopSoundsForLine(clickedLine.lineId);
+        const updatedLines = lines.filter((l) => l.lineId !== clickedLine.lineId);
+        const remainingSonificationPoints = updatedLines.flatMap((l) => l.sonificationPoints);
+        setUndoStack((prev) => [...prev, snapshot]);
+        setLines(updatedLines);
+        setSonificationPoints(remainingSonificationPoints);
+        setRedoStack([]);
+      } else {
+        // No stroke under finger — start sweep erase
+        setIsSweepErasing(true);
+        setEraseTrail([clickPoint]);
+      }
+      return;
     } else {
       // Regular drawing mode
       setCurrentLine([clickPoint]);
@@ -1266,74 +1243,15 @@ const CanvasComponent = () => {
     const containerRect = container.getBoundingClientRect();
     const newPoint = [e.clientX - containerRect.left, e.clientY - containerRect.top, e.pressure];
 
-    if (isTrash && isPointerDown) {
-      const { clientX, clientY } = e;
-      const canvasRect = svgRef.current.getBoundingClientRect();
-      const x = clientX - canvasRect.left;
-      const y = clientY - canvasRect.top;
-      setTrashLinePoints((prevPoints) => [...prevPoints, [x, y]]);
-
-      // Check for intersections with lines
-      const updatedLines = lines.filter(line => {
-        const isIntersected = line.points.some(([px, py]) => {
-          return trashLinePoints.some(([tx, ty]) => {
-            const distance = Math.sqrt((px - tx) ** 2 + (py - ty) ** 2);
-            return distance < 2; // Adjust the threshold as needed
-          });
-        });
-
-        if (isIntersected) {
-          const lineId = line.lineId;
-
-          // Add the erased line to the undo stack
-          setUndoStack((prev) => [...prev, { lines, sonificationPoints }]);
-
-          // Remove intersections from intersectedDots
-          for (const column in intersectedDots.current) {
-            for (const row in intersectedDots.current[column]) {
-              if (intersectedDots.current[column][row].lineId === lineId) {
-                delete intersectedDots.current[column][row];
-              }
-            }
-          }
-
-          // Stop associated sounds
-          stopSoundsForLine(lineId);
-        }
-
-        return !isIntersected; // Keep non-erased lines
+    if (isTrash && isSweepErasing) {
+      setEraseTrail((prev) => {
+        const next = prev.length > 20 ? [...prev.slice(-40), newPoint] : [...prev, newPoint];
+        return next;
       });
-
-      // Update lines and sonification points
-      const remainingSonificationPoints = updatedLines.flatMap((line) => line.sonificationPoints);
-      setLines(updatedLines);
-      setSonificationPoints(remainingSonificationPoints);
-      setRedoStack([]); // Clear redo stack after erasing
+      return;
     } else if (isTrash) {
-      // Eraser mode: remove sonification points that intersect with the eraser path
-      setLines((prevLines) =>
-        prevLines.map((line) => {
-          const updatedSonificationPoints = line.sonificationPoints.filter((point) => {
-            // Check if the current eraser point overlaps with this sonification point
-            return !isPointNearDot(newPoint[0], newPoint[1], point[0], point[1], currentSize, line.size);
-          });
-
-          return {
-            ...line,
-            sonificationPoints: updatedSonificationPoints,
-          };
-        })
-      );
-
-      // Update the sonification points state for real-time feedback
-      setSonificationPoints((prevPoints) =>
-        prevPoints.filter((point) => {
-          return !isPointNearDot(newPoint[0], newPoint[1], point[0], point[1], currentSize, currentSize);
-        })
-      );
-
-      // Visually erase by drawing with the background color
-      setCurrentLine((prevLine) => [...prevLine, newPoint]);
+      // not sweep-erasing (single-click delete already handled in pointer-down)
+      return;
     } else {
       // Regular drawing mode
       setCurrentLine((prevLine) => [...prevLine, newPoint]);
@@ -1448,52 +1366,35 @@ const CanvasComponent = () => {
     // }
 
     if (isTrash) {
-      //TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING
-      setIsPointerDown(false);
-      setTrashLinePoints([]); // Clear the trash line points
-      //TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING TEMPORARYTESTING
-
-      // "Soft" eraser mode: Erase only sonification points locally without deleting entire lines
-      setLines((prevLines) =>
-        prevLines.map((line) => {
-          const updatedSonificationPoints = line.sonificationPoints.filter((point) => {
-            const isNearEraser = currentLine.some((eraserPoint) =>
-              isPointNearDot(eraserPoint[0], eraserPoint[1], point[0], point[1], currentSize, line.size)
-            );
-
-            // If the point is near the eraser, clean up `intersectedDots`
-            if (isNearEraser) {
-              for (const col in intersectedDots.current) {
-                for (const row in intersectedDots.current[col]) {
-                  if (
-                    intersectedDots.current[col][row].point === point &&
-                    intersectedDots.current[col][row].lineId === line.lineId
-                  ) {
-                    delete intersectedDots.current[col][row];
+      if (isSweepErasing) {
+        setIsSweepErasing(false);
+        const trail = eraseTrail;
+        setEraseTrail([]);
+        if (trail.length > 1) {
+          const toDelete = lines.filter((line) => lineTouchesSweepPath(line, trail));
+          if (toDelete.length > 0) {
+            const snapshot = { lines, sonificationPoints };
+            const toDeleteIds = new Set(toDelete.map((l) => l.lineId));
+            toDeleteIds.forEach((lineId) => {
+              for (const column in intersectedDots.current) {
+                for (const row in intersectedDots.current[column]) {
+                  if (intersectedDots.current[column][row].lineId === lineId) {
+                    delete intersectedDots.current[column][row];
                   }
                 }
               }
-            }
-
-            return !isNearEraser; // Keep only points not erased
-          });
-
-          return {
-            ...line,
-            sonificationPoints: updatedSonificationPoints,
-          };
-        })
-      );
-
-      // Update global sonification points (for real-time playback accuracy)
-      const remainingSonificationPoints = sonificationPoints.filter((point) => {
-        return !currentLine.some((eraserPoint) =>
-          isPointNearDot(eraserPoint[0], eraserPoint[1], point[0], point[1], currentSize, currentSize)
-        );
-      });
-
-      setSonificationPoints(remainingSonificationPoints);
-      setCurrentLine([]); // Clear the current drawing line
+              stopSoundsForLine(lineId);
+            });
+            const updatedLines = lines.filter((l) => !toDeleteIds.has(l.lineId));
+            const remainingSonificationPoints = updatedLines.flatMap((l) => l.sonificationPoints);
+            setUndoStack((prev) => [...prev, snapshot]);
+            setLines(updatedLines);
+            setSonificationPoints(remainingSonificationPoints);
+            setRedoStack([]);
+          }
+        }
+      }
+      return;
     } else {
       // Regular drawing mode
       const lineId = uuidv4(); // Generate a unique ID for this new line
@@ -2166,12 +2067,13 @@ const CanvasComponent = () => {
           style={{ touchAction: 'none', width: '100%', height: '100%' }}
         >
 
-          {isTrash && trashLinePoints.length > 0 && (
+          {isSweepErasing && eraseTrail.length > 1 && (
             <path
-              d={getSvgPathFromStroke(trashLinePoints)}
-              stroke='#eae6e1'
-              strokeWidth={5}
+              d={getSvgPathFromStroke(eraseTrail)}
+              stroke='rgba(220,60,60,0.5)'
+              strokeWidth={6}
               fill="none"
+              strokeDasharray="6 4"
             />
           )}
 

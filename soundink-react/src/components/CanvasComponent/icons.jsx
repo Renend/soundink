@@ -36,7 +36,6 @@ export const instrumentIcons = {
   floom: synthIcon,
   epiano: glassIcon,
   synthflute: fluteIcon,
-  bass: bassIcon,
   guitar: guitarIcon,
   marimba: marimbaIcon,
   piano: pianoIcon,
@@ -55,7 +54,6 @@ export const scaleIcons = {
 export const customInstrumentNames = {
   piano: "Piano",
   marimba: "Marimba",
-  bass: "Bass",
   guitar: "Guitar",
   epiano: "Glass Harp",
   floom: "Synthesizer",

@@ -68,6 +68,7 @@ const CanvasComponent = () => {
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
 
   const [selectedLineIds, setSelectedLineIds] = useState([]);
+  const selectedLineIdsRef = useRef([]);
   const [isSweepSelecting, setIsSweepSelecting] = useState(false);
   const [selectionTrail, setSelectionTrail] = useState([]);
   const isSweepErasingRef = useRef(false);
@@ -135,6 +136,10 @@ const CanvasComponent = () => {
   useEffect(() => {
     idInstrumentMapRef.current = idInstrumentMap; // Keep the ref in sync with the state
   }, [idInstrumentMap]);
+
+  useEffect(() => {
+    selectedLineIdsRef.current = selectedLineIds;
+  }, [selectedLineIds]);
 
   useEffect(() => {
     gridConfigRef.current = gridConfig; // Update the ref whenever gridConfig changes
@@ -1017,7 +1022,7 @@ const CanvasComponent = () => {
 
       let idsToDrag;
 
-      if (selectedLineIds.includes(clickedLine.lineId)) {
+      if(selectedLineIds.includes(clickedLine.lineId)) {
         // drag the existing group
         idsToDrag = selectedLineIds;
       } else {
@@ -1332,9 +1337,9 @@ const CanvasComponent = () => {
         return;
       }
 
-      if (!wasDragged) {
-        if (clickedLine) {
-          if (selectedLineIds.includes(clickedLine.lineId) && selectedLineIds.length > 1) {
+      if(!wasDragged) {
+        if(clickedLine) {
+          if(selectedLineIds.includes(clickedLine.lineId) && selectedLineIds.length > 1) {
             // Part of a multiselect — open modal for the group, keep selection
             setSelectedLine(clickedLine);
           } else {
@@ -1541,8 +1546,9 @@ const CanvasComponent = () => {
   };
 
   const updateLineColor = (line, newColor) => {
-    const idsToUpdate = (selectedLineIds.length > 1 && selectedLineIds.includes(line.lineId))
-      ? selectedLineIds
+    const activeIds = selectedLineIdsRef.current;
+    const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
+      ? activeIds
       : [line.lineId];
     setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
     setRedoStack([]);
@@ -1564,8 +1570,9 @@ const CanvasComponent = () => {
   };
 
   const updateLineInstrument = (line, newInstrument) => {
-    const idsToUpdate = (selectedLineIds.length > 1 && selectedLineIds.includes(line.lineId))
-      ? selectedLineIds
+    const activeIds = selectedLineIdsRef.current;
+    const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
+      ? activeIds
       : [line.lineId];
     setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
     setRedoStack([]);
@@ -1585,7 +1592,7 @@ const CanvasComponent = () => {
     setSelectedLine(null); // Close the modal after updating
   };
 
-  // // Undo and redo logic for managing drawing history
+  // Undo and redo logic for managing drawing history
   const handleUndo = () => {
     if (undoStack.length > 0) {
       const previousState = undoStack[undoStack.length - 1];

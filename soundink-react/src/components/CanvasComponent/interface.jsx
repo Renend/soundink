@@ -99,15 +99,12 @@ const CanvasComponent = () => {
 
 
   const colorPaletteGrid = [
-    ['#fbd45b', '#fdc841', '#fdbe3d', '#fead36', '#ea8b28', '#8d5e19'],
-    ['#ffa286', '#fe8965', '#ff6e3d', '#ff590f', '#f53e02', '#56281c'],
-    ['#fb81a5', '#f95f87', '#f44068', '#ec274c', '#e10134', '#a9103a'],
-    ['#c5819e', '#b76b8e', '#ac5a7c', '#963e64', '#710f44', '#411528'],
-    ['#a682c9', '#976dc1', '#875cb3', '#7a4dab', '#604178', '#492e62'],
-    ['#7693dd', '#5b78d1', '#4267c8', '#2c53bf', '#1241ab', '#043293'],
-    ['#2ec5dd', '#00b8d7', '#03a3ce', '#0297c3', '#01697f', '#003b40'],
-    ['#6ec77e', '#47bc65', '#1dac4c', '#1ea038', '#13792b', '#125f2a'],
-    ['#cfcfcf', '#b9b9b9', '#9e9e9d', '#848484', '#565656', '#1c1c1c'],
+    ['#FFFB00', '#FEE22A', '#FEC92C', '#FF9300', '#743B13'],
+    ['#FFBAC5', '#FF7D8E', '#FF759E', '#FF0051', '#C90347'],
+    ['#FFD0F5', '#FF9CDD', '#FF61DF', '#CB00FF', '#770088'],
+    ['#C9FCF0', '#89EAC9', '#37DFAF', '#3AFF1B', '#008538'],
+    ['#BAE6FC', '#48E5FF', '#07BBF1', '#0085FF', '#003C85'],
+    ['#FFFFFF', '#D5D5D5', '#8F8F8F', '#484848', '#000000'],
   ];
 
 
@@ -1832,7 +1829,7 @@ const CanvasComponent = () => {
 
   return (
     <div className="main-container">
-      <div className="controls-container">
+      <div className={`controls-container ${selectedSlot ? 'menu-active' : ''}`}>
         <div className="play-group">
           <button
             ref={playStopButtonRef} // Add a ref here
@@ -1855,7 +1852,7 @@ const CanvasComponent = () => {
 
         <div className="color-group">
           {Object.keys(colorInstrumentMap).map((slot, index) => (
-            <div key={index} className="color-instrument-pair">
+            <div key={index} className={`color-instrument-pair ${selectedSlot === slot ? 'menu-open' : ''}`}>
               {/* Color button */}
               <button
                 className={`color-button ${!isEditMode && currentColor === slot ? 'active' : ''}`}
@@ -1879,17 +1876,19 @@ const CanvasComponent = () => {
                   className="color-button-instrument-icon"
                 />
               </button>
-              {/* Instrument button */}
-              <button
-                className="instrument-select-button"
-                // onClick={() => openInstrumentMenu(slot)}
-                onClick={() => { // added - Renee
-                  if(isEditMode) exitEditMode();
-                  openInstrumentMenu(slot);
-                }}
-              >
-                <img src={GearIcon} alt="Settings Button" className="iconGear" />
-              </button>
+              {/* Gear tab: white connector + gear button share one background */}
+              <div className="gear-tab-wrapper">
+                <div className="instrument-connector" />
+                <button
+                  className="instrument-select-button"
+                  onClick={() => { // added - Renee
+                    if(isEditMode) exitEditMode();
+                    openInstrumentMenu(slot);
+                  }}
+                >
+                  <img src={GearIcon} alt="Settings Button" className="iconGear" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -1904,38 +1903,73 @@ const CanvasComponent = () => {
         </div> */}
 
 
-        {/* Center the Eraser button in its own container */}
+        {/* Sliders: brush → volume → metronome → grid */}
+        <div className="vertical-sliders-1">
+          <div className="brush-size-group">
+            <input
+              type="range"
+              min="1"
+              max="50"
+              step="1"
+              value={currentSize}
+              onChange={(e) => setCurrentSize(Number(e.target.value))}
+            />
+          </div>
+          <div className="volume-slider-group">
+            <input
+              id="volume-slider"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={(e) => {
+                const newVolume = parseFloat(e.target.value);
+                setVolume(newVolume);
+                setMasterVolume(newVolume);
+              }}
+            />
+          </div>
+          <div className="slider-group">
+            <input
+              id="bpm"
+              type="range"
+              min="60"
+              max="400"
+              step="5"
+              value={bpm}
+              onChange={(e) => {
+                const bpmValue = Number(e.target.value);
+                setBpm(bpmValue);
+                const playbackSpeedValue = Math.round(60000 / bpmValue);
+                setPlaybackSpeed(playbackSpeedValue);
+              }}
+            />
+          </div>
+          <div className="grid-slider-group">
+            <input
+              id="grid-slider"
+              type="range"
+              min="0"
+              max={gridConfigurations.length - 1}
+              step="1"
+              value={gridIndex}
+              onChange={handleGridChange}
+            />
+          </div>
+        </div>
+
+        {/* Edit and Trash buttons — below sliders */}
         <div className="eraser-container">
-          {/* <button
-            className={`eraser-button ${isEraser ? 'active' : ''}`}
-            // onClick={() => setIsEraser(!isEraser)}
-            onClick={() => {
-              if (isEraser) {
-                // If eraser is already on, turn it off and restore the previous color
-                setCurrentColor(previousColor);
-                setIsTrash(false);
-              } else {
-                // If eraser is off, save the current color and set to eraser color
-                setPreviousColor(currentColor);
-                // setCurrentColor(ERASER_COLOR);
-                setCurrentColor('eraser');
-                setIsTrash(false);
-              }
-              setIsEraser(!isEraser); // Toggle the eraser mode
-            }}
-          >
-            <img src={EraseIcon} alt="Eraser" className="iconEraser" />
-          </button> */}
           <button
             className={`edit-button ${isEditMode ? 'active' : ''}`}
-            // onClick={() => setIsEditMode(!isEditMode)} // Toggle Edit Mode
-            onClick={() => { // changed - Renee
+            onClick={() => {
               setIsEditMode(prev => {
                 const newState = !prev;
 
                 if(newState) {
                   previousToolStateRef.current = {currentColor, isTrash, isEraser};
-                  setIsTrash(false); // turn off trash
+                  setIsTrash(false);
                   setIsEraser(false);
                   setSelectedLine(null);
                 } else {
@@ -1955,97 +1989,21 @@ const CanvasComponent = () => {
 
           <button
             className={`trash-button ${!isEditMode && isTrash ? 'active' : ''}`}
-            // onClick={() => setIsTrash(!isTrash)}
             onClick={() => {
-              if(isEditMode) exitEditMode(); // added - Renee
+              if(isEditMode) exitEditMode();
               if (isTrash) {
-                // If eraser is already on, turn it off and restore the previous color
                 setCurrentColor(previousColor);
                 setIsEraser(false);
               } else {
-                // If eraser is off, save the current color and set to eraser color
                 setPreviousColor(currentColor);
-                // setCurrentColor(ERASER_COLOR);
                 setCurrentColor('eraser');
                 setIsEraser(false);
               }
-              setIsTrash(!isTrash); // Toggle the eraser mode
+              setIsTrash(!isTrash);
             }}
           >
             <img src={TrashIcon} alt="Trash" className="iconTrash" />
           </button>
-        </div>
-
-        {/* Brush size slider */}
-        {/* Playback Speed Slider */}
-        <div className="vertical-sliders-1">
-          {/* <div className="brush-size-group">
-            <input
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              value={currentSize}
-              onChange={(e) => setCurrentSize(Number(e.target.value))}
-            />
-          </div> */}
-          <div className="volume-slider-group">
-            {/* <label htmlFor="grid-slider">Grid Configuration</label> */}
-            <input
-              id="volume-slider"
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={(e) => {
-                const newVolume = parseFloat(e.target.value);
-                setVolume(newVolume); // Update the state
-                setMasterVolume(newVolume); // Update the global volume
-              }}
-            />
-          </div>
-          <div className="slider-group">
-            <input
-              id="bpm"
-              type="range"
-              min="60" // Slowest tempo
-              max="400" // Fastest tempo
-              step="5" // Increment for each slider step
-              value={bpm}
-              onChange={(e) => {
-                const bpmValue = Number(e.target.value); // Get BPM from the slider
-                setBpm(bpmValue); // Set BPM in state
-                const playbackSpeedValue = Math.round(60000 / bpmValue); // Convert BPM to delay in ms
-                setPlaybackSpeed(playbackSpeedValue); // Update playback speed
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="vertical-sliders-2">
-          <div className="grid-slider-group">
-            {/* <label htmlFor="grid-slider">Grid Configuration</label> */}
-            <input
-              id="grid-slider"
-              type="range"
-              min="0"
-              max={gridConfigurations.length - 1}
-              step="1"
-              value={gridIndex}
-              onChange={handleGridChange}
-            />
-          </div>
-          <div className="brush-size-group">
-            <input
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              value={currentSize}
-              onChange={(e) => setCurrentSize(Number(e.target.value))}
-            />
-          </div>
         </div>
 
         {/* Loop & Scale Control */}

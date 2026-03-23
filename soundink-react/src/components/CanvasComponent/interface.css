@@ -7,21 +7,21 @@
   --sliderColor: #96b37885;
   --shadowColor: #96B378;
   --menuButtonColor: #a36a59;
-  --menuColor: #96B378;
+  --menuColor: #3A9BF5;
   --menuTextColor: #2E2E2E;
 } */
 
 :root {
-  --canvasColor: #eae6e1;
-  --editmodeColor: #b7aea2;
-  --sideBarColor: #4d9cae; 
-  --buttonColor: #b64545;
-  --buttonHoverColor: #bf5050;
-  --shadowBorder: #ffefd8;
-  --sliderColor: #b1e21185;
-  --shadowColor: #c8b66d;
-  --menuButtonColor: #4d9cae;
-  --menuColor: #96B378;
+  --canvasColor: #ffffff;
+  --editmodeColor: #b7b7b7;
+  --sideBarColor: #00C4D4;
+  --buttonColor: #ffffff;
+  --buttonHoverColor: #e8e8e8;
+  --shadowBorder: rgba(255, 255, 255, 0.8);
+  --sliderColor: rgba(0, 60, 90, 0.55);
+  --shadowColor: rgba(0, 150, 180, 0.5);
+  --menuButtonColor: rgba(255, 255, 255, 0.2);
+  --menuColor: #3A9BF5;
   --menuTextColor: #2E2E2E;
   --settingButtonColor: #1f57b8;
 }
@@ -55,18 +55,17 @@ html, body {
   margin-top: 0px;
   margin-left: 0px;
   height: 100%;
-  max-width: 110px;
-  padding: 20px 20px;
+  max-width: 140px;
+  padding: 20px 12px;
   background: linear-gradient(90deg, var(--sideBarColor) 0%, var(--sideBarColor) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   /* box-sizing: border-box; */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   /* overflow-y: auto; */
   border: 3px solid var(--sideBarColor);
-  z-index: 1;
 }
 
 /* 4e76bb blue */
@@ -75,7 +74,7 @@ html, body {
 @media (max-height: 800px) {
   .controls-container {
     overflow: hidden !important;
-    max-width: 85px;
+    max-width: 120px;
     max-height: 700px;
   }
 }
@@ -116,7 +115,7 @@ html, body {
   align-items: center;
   /* display: grid; */
   grid-template-columns: repeat(1, 3fr);
-  gap: 1vh;
+  gap: 2vh;
   width: 100%;
   justify-content: center;
   /* Center align the buttons */
@@ -143,23 +142,19 @@ button {
 }
 
 .color-button {
-  /* width: 100% !important;
-  height: 100% !important; */
-  background-color: var(--menuTextColor);
+  background-color: #ffffff;
   width: 75px !important;
   height: 75px !important;
   aspect-ratio: 1 / 1;
   border-radius: 30% !important;
-  /* border: 2px solid var(--buttonColor); */
-  /* border: 7px solid !important; */
   border-style: solid;
   cursor: pointer;
-  /* transition: transform 0.2s; */
   transition: transform 0.2s, border-color 0.2s !important;
   transform: scale(1);
   align-items: center;
   justify-content: center;
   display: flex;
+  flex-shrink: 0;
 }
 
 .color-button:hover {
@@ -174,18 +169,33 @@ button {
     0 0 13px var(--shadowColor);
 }
 
+.gear-tab-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: white;
+  border-radius: 0 30% 30% 0;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.14);
+  padding: 4px 6px 4px 0;
+  flex-shrink: 0;
+}
+
+.instrument-connector {
+  width: 5px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
 .instrument-select-button {
-  /* width: 50% !important;
-  height: 50% !important; */
-  width: 30px !important;
-  height: 30px !important;
-  background-color: var(--settingButtonColor) !important;
-  border-color: var(--menuColor) !important;
+  width: 32px !important;
+  height: 32px !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
   transition: transform 0.2s;
-  transform: scale(1);
-  position: absolute;
-  top: -10%;
-  left: 70%;
+  flex-shrink: 0;
+  box-shadow: none !important;
 }
 
 .instrument-select-button:hover {
@@ -195,13 +205,42 @@ button {
 /* Container for each color-instrument pair */
 .color-instrument-pair {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   position: relative;
-  /* gap: 10px; */
-  gap: 0.5vw;
+  gap: 0px;
   width: 100%;
+  border-radius: 25%;
+  transition: box-shadow 0.2s;
+}
+
+.color-instrument-pair.menu-open {
+  position: relative;
+  z-index: 10000;
+}
+
+.color-instrument-pair.menu-open .color-button {
+  box-shadow: 0 0 0 3px #ffffff;
+}
+
+.color-instrument-pair.menu-open .gear-tab-wrapper {
+  box-shadow: 0 0 0 3px #ffffff;
+}
+
+/* Dim non-selected items when menu is open */
+.controls-container.menu-active .color-instrument-pair:not(.menu-open) {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.controls-container.menu-active .play-group,
+.controls-container.menu-active .vertical-sliders-1,
+.controls-container.menu-active .eraser-container,
+.controls-container.menu-active .loop-scale-group,
+.controls-container.menu-active .load-save-group {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 
@@ -224,19 +263,13 @@ button {
 .scale-container,
 .grid-scale-row {
   display: flex;
-  /* Arrange buttons horizontally */
-  gap: 0.5vw;
-  /* Space between the Grid and Loop buttons */
+  gap: 8px;
   width: 100%;
-  /* Adjust width as needed */
-  height: 3em;
-  max-height: 2em;
+  height: 50px;
   justify-content: center;
-  /* Center align the buttons */
   align-items: center;
-  margin-bottom: 1vh;
-  margin-top: 0vh;
-  /* Adjust spacing above the group */
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 .edit-container {
@@ -255,7 +288,7 @@ button {
 
 .play-group {
   margin-top: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 32px;
 }
 
 /* .loop-scale-group {
@@ -275,25 +308,23 @@ button {
 .save-button,
 .load-button,
 .scale-button {
-  width: 10vw;
-  /* height: 0%; */
+  width: 50px;
+  height: 50px;
   padding: 0px;
   margin: 0 auto;
-  border: 2px solid var(--buttonColor);
-  /* border: None; */
-  border-radius: 30%;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 25%;
   font-size: 1.8em;
   cursor: pointer;
   /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
   transition: transform 0.2s, background-color 0.2s;
   background-color: var(--buttonColor);
   text-align: center;
-  box-shadow: none;
-  /* transition: border-color 0.5s ease-out, box-shadow 0.5s ease-out; */
-  transition: 
-    transform 0.3s cubic-bezier(0.42, 0, 0.58, 1), /* Smooth scale transition */
-    border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), /* Quick ease-in */
-    box-shadow 0.6s cubic-bezier(0.42, 0, 0.58, 1); /* Smooth ease-out for shadow */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition:
+    transform 0.3s cubic-bezier(0.42, 0, 0.58, 1),
+    border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 0.6s cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 /* .edit-button {
@@ -330,8 +361,8 @@ button {
 }
 
 .edit-button.active {
-  background-color: var(--buttonHoverColor);
-  border-color: var(--shadowBorder);
+  background-color: #ffffff;
+  border: 3px solid #FF61DF !important;
 }
 
 .eraser-button:hover,
@@ -385,48 +416,39 @@ button {
   .load-save-group,
   .scale-container {
     display: flex;
-    /* Arrange buttons horizontally */
-    gap: 0.5vw;
-    /* Space between the Grid and Loop buttons */
+    gap: 8px;
     width: 100%;
-    /* Adjust width as needed */
-    height: 3em;
-    max-height: 1.7em;
+    height: 44px;
     justify-content: center;
-    /* Center align the buttons */
     align-items: center;
-    /* margin-bottom: 10px; */
-    margin-top: 10px;
-    /* Adjust spacing above the group */
+    margin-top: 0;
   }
 
   .play-group {
-    margin-top: 15px;
-    margin-bottom: 20px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   }
 
 .play-stop-button {
   margin-top: 0px;
-  width: 75px;
-  /* height: 0%; */
+  width: 95px;
+  height: 95px;
   padding: 0px;
   margin: 0 auto;
-  border: 2px solid var(--buttonColor);
-  /* border: None; */
-  border-radius: 30%;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 25%;
   font-size: 1.8em;
   cursor: pointer;
   /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
   transition: transform 0.2s, background-color 0.2s;
   background-color: var(--buttonColor);
   text-align: center;
-  box-shadow: none;
-  /* transition: border-color 0.5s ease-out, box-shadow 0.5s ease-out; */
-  transition: 
-    transform 0.3s cubic-bezier(0.42, 0, 0.58, 1), /* Smooth scale transition */
-    border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), /* Quick ease-in */
-    box-shadow 0.6s cubic-bezier(0.42, 0, 0.58, 1); /* Smooth ease-out for shadow */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition:
+    transform 0.3s cubic-bezier(0.42, 0, 0.58, 1),
+    border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 0.6s cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 /* .loop-scale-group {
@@ -517,22 +539,21 @@ button {
 }
 
 .close-modal-button {
-  width: 60px;
-  height: 60px;
-  margin-top: 45px;
-  padding: 18px 18px;
-  background-color: #9e2424;
+  width: 34px;
+  height: 34px;
+  margin-top: 0;
+  padding: 6px;
+  background-color: #FF0051;
   color: white;
-  border-radius: 15%;
-  border: None;
-  /* border-color: #310e15 !important; */
+  border-radius: 50%;
+  border: none;
   cursor: pointer;
 }
 
 .close-modal-button:hover {
-  background-color: #c32b2b;
+  background-color: #e0003f;
 }
-/* 
+/*
 .instrument-options-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -554,9 +575,9 @@ button {
 
 .instrument-option-cell {
   display: flex;
-  flex-direction: column; /* Stack button and label */
-  align-items: center; /* Center align items */
-  gap: 5px; /* Space between button and label */
+  flex-direction: row; /* Icon and label side by side */
+  align-items: center;
+  gap: 10px;
 }
 
 .instrument-label {
@@ -616,8 +637,15 @@ button {
 }
 
 .iconQuit {
-  transform: scale(10);
-  filter: None;
+  display: none !important;
+}
+
+.close-modal-button::after {
+  content: "×";
+  color: white;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 .iconDo {
@@ -720,30 +748,27 @@ button:hover .instrument-sidebar-icon {
   margin: center;
   /* Center the SVG within the button */
   transform: scale(0.65);
-  stroke: var(--shadowColor);
-  stroke-width: 2px;
-  /* filter: drop-shadow(0 0 1px var(--menuTextColor)) drop-shadow(0 0 1px var(--menuTextColor)); */
-  filter: drop-shadow(0 0 1px var(--shadowColor));
+  filter: none;
 }
 
 /* //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 .vertical-sliders-1 {
   display: flex;
-  gap: 10px;
-  justify-content: center;
-  width: 50%;
-  margin-bottom: 0vh;
-  margin-top: 3.5vh;
+  flex-direction: column;
+  gap: 0px;
+  width: 100%;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 .vertical-sliders-2 {
   display: flex;
-  gap: 10px;
-  justify-content: center;
-  width: 50%;
-  margin-bottom: 2vh;
-  margin-top: 6vh;
+  flex-direction: column;
+  gap: 0px;
+  width: 100%;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 /* Brush size and Playback Speed slider styling with Icon labels */
@@ -754,9 +779,9 @@ button:hover .instrument-sidebar-icon {
   align-items: center;
   gap: 0px;
   width: 100%;
-  max-height: 50%;
-  margin-top: 0vh;
-  margin-bottom: 0vh;
+  height: 48px;
+  margin-top: 0;
+  margin-bottom: 0;
   justify-content: center;
 }
 
@@ -768,29 +793,23 @@ button:hover .instrument-sidebar-icon {
 .slider-group input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 10em !important;
-  height: 40px;
-  max-width: 8em;
+  width: 100% !important;
+  height: 8px;
   background: var(--sliderColor);
-  border-radius: 11px;
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
-  transform: rotate(-90deg);
-  /* border: 2px solid #333; */
 }
 
 .brush-size-group input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 128px !important;
-  height: 40px;
-  max-width: 8em;
+  width: 100% !important;
+  height: 8px;
   background: var(--sliderColor);
-  border-radius: 11px;
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
-  transform: rotate(-90deg);
-  /* border: 2px solid #333; */
 }
 
 @media (max-height: 800px) {
@@ -812,21 +831,17 @@ button:hover .instrument-sidebar-icon {
 .brush-size-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/brush-svgrepo-com-2.svg');
-  background-size: 70%;
+  background-image: url('./../../assets/icons/Brush-dark.svg');
+  background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
-  /* border: 2px solid #310e15; */
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor); */
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 25%;
   cursor: pointer;
-  transform: rotate(90deg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
@@ -838,22 +853,19 @@ button:hover .instrument-sidebar-icon {
 }
 
 .slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/metronome-tempo-beat-bpm-svgrepo-com-3.svg');
-  background-size: 70%;
+  background-image: url('./../../assets/icons/Metronome-dark.svg');
+  background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
-  /* border: 2px solid #310e15; */
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor); */
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 25%;
   cursor: pointer;
-  transform: rotate(90deg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
@@ -865,40 +877,32 @@ button:hover .instrument-sidebar-icon {
 }
 
 .brush-size-group input[type="range"]::-moz-range-thumb {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/brush-svgrepo-com-2.svg');
-  background-size: contain;
+  background-image: url('./../../assets/icons/Brush-dark.svg');
+  background-size: 65%;
+  background-position: center;
   background-repeat: no-repeat;
-  /* border: 2px solid #310e15; */
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowBorder); */
-  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 25%;
   cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
 .slider-group input[type="range"]::-moz-range-thumb {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/metronome-tempo-beat-bpm-svgrepo-com-3.svg');
-  background-size: contain;
+  background-image: url('./../../assets/icons/Metronome-dark.svg');
+  background-size: 65%;
+  background-position: center;
   background-repeat: no-repeat;
-  /* border: 2px solid #310e15; */
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowBorder); */
-  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 25%;
   cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
@@ -908,9 +912,9 @@ button:hover .instrument-sidebar-icon {
   align-items: center;
   gap: 0px;
   width: 100%;
-  max-height: 50%;
-  margin-top: 0vh;
-  margin-bottom: 0vh;
+  height: 48px;
+  margin-top: 0;
+  margin-bottom: 0;
   justify-content: center;
 }
 
@@ -923,34 +927,29 @@ button:hover .instrument-sidebar-icon {
 .grid-slider-group input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 10em !important;
-  height: 40px;
-  max-width: 8em;
+  width: 100% !important;
+  height: 8px;
   background: var(--sliderColor);
-  border-radius: 11px;
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
-  transform: rotate(-90deg); /* Vertical orientation */
 }
 
 /* Grid Slider Thumb Styling */
 .grid-slider-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/ruler-svgrepo-com.svg'); /* Replace with your grid icon */
-  background-size: 70%;
+  background-image: url('./../../assets/icons/Meter-dark.svg'); /* Scale/ruler icon */
+  background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor); */
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 25%;
   cursor: pointer;
-  transform: rotate(90deg); /* Rotate the thumb to match the slider */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
@@ -967,7 +966,7 @@ button:hover .instrument-sidebar-icon {
   width: 40px;
   height: 40px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/ruler-svgrepo-com.svg'); /* Replace with your grid icon */
+  background-image: url('./../../assets/icons/Meter-dark.svg'); /* Scale/ruler icon */
   background-size: contain;
   background-repeat: no-repeat;
   border: 1px solid var(--buttonColor);
@@ -988,9 +987,9 @@ button:hover .instrument-sidebar-icon {
   align-items: center;
   gap: 0px;
   width: 100%;
-  max-height: 50%;
-  margin-top: 0vh;
-  margin-bottom: 0vh;
+  height: 48px;
+  margin-top: 0;
+  margin-bottom: 0;
   justify-content: center;
 }
 
@@ -999,38 +998,33 @@ button:hover .instrument-sidebar-icon {
   color: var(--menuTextColor); /* Match the theme color */
 }
 
-/* Grid Slider Input Styling */
+/* Volume Slider Input Styling */
 .volume-slider-group input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 10em !important;
-  height: 40px;
-  max-width: 8em;
+  width: 100% !important;
+  height: 8px;
   background: var(--sliderColor);
-  border-radius: 11px;
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
-  transform: rotate(-90deg); /* Vertical orientation */
 }
 
-/* Grid Slider Thumb Styling */
+/* Volume Slider Thumb Styling */
 .volume-slider-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/audio-music-on-song-sound-speaker-svgrepo-com-2.svg'); /* Replace with your grid icon */
-  background-size: 70%;
+  background-image: url('./../../assets/icons/Volume-dark.svg'); /* Volume icon */
+  background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
-  border: 1px solid var(--buttonColor);
-  /* box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor); */
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 25%;
   cursor: pointer;
-  transform: rotate(90deg); /* Rotate the thumb to match the slider */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: background-color 0.3s;
 }
 
@@ -1047,7 +1041,7 @@ button:hover .instrument-sidebar-icon {
   width: 40px;
   height: 40px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/audio-music-on-song-sound-speaker-svgrepo-com-2.svg'); /* Replace with your grid icon */
+  background-image: url('./../../assets/icons/Volume-dark.svg'); /* Volume icon */
   background-size: contain;
   background-repeat: no-repeat;
   border: 1px solid var(--buttonColor);
@@ -1236,38 +1230,39 @@ button:hover .instrument-sidebar-icon {
 
 .instrument-option-cell {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
+  gap: 10px;
 }
 
 .close-modal-button {
   position: absolute;
-  top: -40px;
-  left: 5px;
-  width: 40px;
-  height: 40px;
-  background-color: #9e2424;
+  top: -16px;
+  right: -16px;
+  margin-top: 0;
+  width: 34px;
+  height: 34px;
+  background-color: #FF0051 !important;
   color: white;
   border-radius: 50%;
-  border: none;
+  border: none !important;
+  box-shadow: none !important;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .close-modal-button:hover {
-  background-color: #c32b2b;
+  background-color: #e0003f;
 }
 
 .instrument-label {
   font-size: 14px;
-  /* font-weight: bold; */
-  margin-top: 8px;
-  color: var(--menuTextColor);
-  text-align: center;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: left;
 }
 
 
@@ -1620,31 +1615,31 @@ button:hover .instrument-sidebar-icon {
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: var(--menuColor);
-  padding: 50px;
+  padding: 40px;
   border-radius: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  max-width: 650px; /* Adjust width as needed */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  max-width: 700px;
   display: flex;
-  flex-direction: row; /* Horizontal layout */
-  align-items: flex-start; /* Align items to the top */
-  gap: 50px; /* Space between color and instrument sections */
-  overflow-y: auto;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 40px;
+  overflow: visible;
   font-family: 'Roboto', sans-serif;
 }
 
 .color-options {
   display: grid;
-  grid-template-columns: repeat(6, 1fr); /* Adjust based on the number of colors per row */
+  grid-template-columns: repeat(5, 1fr); /* 5 columns to match palette */
   gap: 10px;
-  width: 600px; /* Fixed width for the color grid */
+  width: 360px; /* Fixed width for the color grid */
 }
 
 .instrument-options {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr); /* Adjust based on the number of instruments per row */
-  gap: 10px;
-  width: 300px; /* Fixed width for the instrument grid */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
 }
 
 .color-option {
@@ -1670,11 +1665,11 @@ button:hover .instrument-sidebar-icon {
 .instrument-option-button {
   width: 60px;
   height: 60px;
-  background-color: var(--menuButtonColor);
-  border: 2px solid var(--menuButtonColor);
-  border-radius: 30%;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 3px solid white;
+  border-radius: 25%;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;

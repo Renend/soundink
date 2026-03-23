@@ -70,8 +70,10 @@ const CanvasComponent = () => {
   const [selectedLineIds, setSelectedLineIds] = useState([]);
   const [isSweepSelecting, setIsSweepSelecting] = useState(false);
   const [selectionTrail, setSelectionTrail] = useState([]);
-  const [isSweepErasing, setIsSweepErasing] = useState(false);
-  const [eraseTrail, setEraseTrail] = useState([]);
+  const isSweepErasingRef = useRef(false);
+  const sweepEraseSnapshotRef = useRef(null);
+  const sweepErasedRef = useRef(false);
+  const lastErasePointRef = useRef(null);
   const [draggedLineIds, setDraggedLineIds] = useState([]);
 
   const originalDraggedLinesPointsRef = useRef({});
@@ -1122,8 +1124,10 @@ const CanvasComponent = () => {
         setRedoStack([]);
       } else {
         // No stroke under finger — start sweep erase
-        setIsSweepErasing(true);
-        setEraseTrail([clickPoint]);
+        isSweepErasingRef.current = true;
+        sweepEraseSnapshotRef.current = { lines, sonificationPoints };
+        sweepErasedRef.current = false;
+        lastErasePointRef.current = clickPoint;
       }
       return;
     } else {
@@ -1243,14 +1247,32 @@ const CanvasComponent = () => {
     const containerRect = container.getBoundingClientRect();
     const newPoint = [e.clientX - containerRect.left, e.clientY - containerRect.top, e.pressure];
 
-    if (isTrash && isSweepErasing) {
-      setEraseTrail((prev) => {
-        const next = prev.length > 20 ? [...prev.slice(-40), newPoint] : [...prev, newPoint];
-        return next;
-      });
+    if (isTrash && isSweepErasingRef.current) {
+      const lastPoint = lastErasePointRef.current;
+      lastErasePointRef.current = newPoint;
+      const segment = [lastPoint, newPoint];
+      const toDelete = lines.filter((line) => lineTouchesSweepPath(line, segment));
+      if (toDelete.length > 0) {
+        sweepErasedRef.current = true;
+        const toDeleteIds = new Set(toDelete.map((l) => l.lineId));
+        toDeleteIds.forEach((lineId) => {
+          for (const column in intersectedDots.current) {
+            for (const row in intersectedDots.current[column]) {
+              if (intersectedDots.current[column][row].lineId === lineId) {
+                delete intersectedDots.current[column][row];
+              }
+            }
+          }
+          stopSoundsForLine(lineId);
+        });
+        const updatedLines = lines.filter((l) => !toDeleteIds.has(l.lineId));
+        setLines(updatedLines);
+        setSonificationPoints(updatedLines.flatMap((l) => l.sonificationPoints));
+        setRedoStack([]);
+      }
       return;
     } else if (isTrash) {
-      // not sweep-erasing (single-click delete already handled in pointer-down)
+      // single-click delete already handled in pointer-down
       return;
     } else {
       // Regular drawing mode
@@ -1366,32 +1388,17 @@ const CanvasComponent = () => {
     // }
 
     if (isTrash) {
-      if (isSweepErasing) {
-        setIsSweepErasing(false);
-        const trail = eraseTrail;
-        setEraseTrail([]);
-        if (trail.length > 1) {
-          const toDelete = lines.filter((line) => lineTouchesSweepPath(line, trail));
-          if (toDelete.length > 0) {
-            const snapshot = { lines, sonificationPoints };
-            const toDeleteIds = new Set(toDelete.map((l) => l.lineId));
-            toDeleteIds.forEach((lineId) => {
-              for (const column in intersectedDots.current) {
-                for (const row in intersectedDots.current[column]) {
-                  if (intersectedDots.current[column][row].lineId === lineId) {
-                    delete intersectedDots.current[column][row];
-                  }
-                }
-              }
-              stopSoundsForLine(lineId);
-            });
-            const updatedLines = lines.filter((l) => !toDeleteIds.has(l.lineId));
-            const remainingSonificationPoints = updatedLines.flatMap((l) => l.sonificationPoints);
-            setUndoStack((prev) => [...prev, snapshot]);
-            setLines(updatedLines);
-            setSonificationPoints(remainingSonificationPoints);
-            setRedoStack([]);
-          }
+      if (isSweepErasingRef.current) {
+        isSweepErasingRef.current = false;
+        if (sweepErasedRef.current && sweepEraseSnapshotRef.current) {
+          const snapshot = sweepEraseSnapshotRef.current;
+          sweepEraseSnapshotRef.current = null;
+          sweepErasedRef.current = false;
+          lastErasePointRef.current = null;
+          setUndoStack((prev) => [...prev, snapshot]);
+        } else {
+          sweepEraseSnapshotRef.current = null;
+          lastErasePointRef.current = null;
         }
       }
       return;
@@ -2067,15 +2074,6 @@ const CanvasComponent = () => {
           style={{ touchAction: 'none', width: '100%', height: '100%' }}
         >
 
-          {isSweepErasing && eraseTrail.length > 1 && (
-            <path
-              d={getSvgPathFromStroke(eraseTrail)}
-              stroke='rgba(220,60,60,0.5)'
-              strokeWidth={6}
-              fill="none"
-              strokeDasharray="6 4"
-            />
-          )}
 
           {allStrokes}
           {currentLine.length > 0 && <path d={currentStroke} fill={colorSlots[currentColor]} />}

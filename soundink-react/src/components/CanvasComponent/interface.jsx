@@ -65,7 +65,8 @@ const CanvasComponent = () => {
   const [originalLinePoints, setOriginalLinePoints] = useState(null); // Store the original points of the dragged line
   const [initialDragPoint, setInitialDragPoint] = useState(null); // Store the initial cursor position
   const [intersectedDotsState, setIntersectedDotsState] = useState({});
-  const [wasDragged, setWasDragged] = useState(false); // Tracks if the pointer was dragged
+  const [wasDragged, setWasDragged] = useState(false);
+  const didActuallyDragRef = useRef(false); // ref mirror used only for undo commit in pointer-up
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
 
   const [selectedLineIds, setSelectedLineIds] = useState([]);
@@ -74,6 +75,7 @@ const CanvasComponent = () => {
   const [draggedLineIds, setDraggedLineIds] = useState([]);
 
   const originalDraggedLinesPointsRef = useRef({});
+  const pendingDragSnapshot = useRef(null);
   
   // State to hold instrument assignment for each color
   const [colorInstrumentMap, setColorInstrumentMap] = useState({
@@ -993,7 +995,7 @@ const CanvasComponent = () => {
 
   // Called when user starts drawing (pointer down)
   const handlePointerDown = (e) => {
-    setWasDragged(false); // Reset the dragging flag
+    setWasDragged(false); didActuallyDragRef.current = false; // Reset the dragging flag
     e.target.setPointerCapture(e.pointerId);
     // const clickPoint = [e.pageX, e.pageY];
     const canvasRect = svgRef.current.getBoundingClientRect();
@@ -1025,9 +1027,10 @@ const CanvasComponent = () => {
       setDraggedLine(clickedLine);
       setDraggedLineIds(idsToDrag);
 
+        pendingDragSnapshot.current = { lines, sonificationPoints };
         setIsDragging(true);
         setInitialDragPoint(clickPoint);
-        setWasDragged(false);
+        setWasDragged(false); didActuallyDragRef.current = false;
 
         originalDraggedLinesPointsRef.current = {};
         idsToDrag.forEach((lineId) => {
@@ -1046,7 +1049,7 @@ const CanvasComponent = () => {
         setSelectedLineIds([]);
         setIsSweepSelecting(true);
         setSelectionTrail([clickPoint]);
-        setWasDragged(false);
+        setWasDragged(false); didActuallyDragRef.current = false;
       }
 
       return;
@@ -1163,7 +1166,7 @@ const CanvasComponent = () => {
       const currentPoint = [e.clientX - containerRect.left, e.clientY - containerRect.top];
 
       if (isDragging && draggedLineIds.length > 0 && initialDragPoint) {
-        setWasDragged(true);
+        setWasDragged(true); didActuallyDragRef.current = true;
 
         const offsetX = currentPoint[0] - initialDragPoint[0];
         const offsetY = currentPoint[1] - initialDragPoint[1];
@@ -1184,7 +1187,7 @@ const CanvasComponent = () => {
       }
 
       if (isSweepSelecting) {
-        setWasDragged(true);
+        setWasDragged(true); didActuallyDragRef.current = true;
 
         setSelectionTrail((prevTrail) => {
           const nextTrail = prevTrail.length > 20
@@ -1210,7 +1213,7 @@ const CanvasComponent = () => {
 
     // // Handle line dragging in Edit Mode
     // if (isDragging && draggedLine && originalLinePoints && initialDragPoint) {
-    //   setWasDragged(true); // Mark as dragged
+    //   wasDraggedRef.current.current = true; // Mark as dragged
     //   const canvasRect = svgRef.current.getBoundingClientRect();
     //   const currentPoint = [e.clientX - canvasRect.left, e.clientY - canvasRect.top];
 
@@ -1364,6 +1367,12 @@ const CanvasComponent = () => {
       }
 
       if (isDragging) {
+        const snapshot = pendingDragSnapshot.current;
+        pendingDragSnapshot.current = null;
+        if (didActuallyDragRef.current && snapshot) {
+          setUndoStack(prev => [...prev, snapshot]);
+          setRedoStack([]);
+        }
         setIsDragging(false);
         setDraggedLine(null);
         setDraggedLineIds([]);
@@ -1390,7 +1399,7 @@ const CanvasComponent = () => {
 
       return;
     }
-    // if (!wasDragged && isEditMode) {
+    // if (!wasDraggedRef.current && isEditMode) {
 
     //   // Use the clickPoint stored in the ref
     //   const clickPoint = clickPointRef.current;
@@ -1614,6 +1623,8 @@ const CanvasComponent = () => {
   };
 
   const updateLineColor = (line, newColor) => {
+    setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
+    setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
         l.lineId === line.lineId ? { ...l, color: newColor, highlightColor: newColor } : l
@@ -1632,6 +1643,8 @@ const CanvasComponent = () => {
   };
 
   const updateLineInstrument = (line, newInstrument) => {
+    setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
+    setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
         l.lineId === line.lineId
@@ -1652,7 +1665,8 @@ const CanvasComponent = () => {
   // // Undo and redo logic for managing drawing history
   const handleUndo = () => {
     if (undoStack.length > 0) {
-      const previousState = undoStack.pop();
+      const previousState = undoStack[undoStack.length - 1];
+      setUndoStack(undoStack.slice(0, -1));
 
       // Add current state to redo stack before applying undo
       setRedoStack([{ lines, sonificationPoints }, ...redoStack]);
@@ -1684,7 +1698,8 @@ const CanvasComponent = () => {
   const handleRedo = () => {
     if (redoStack.length > 0) {
       // Retrieve the next state from redo stack
-      const nextState = redoStack.shift();
+      const nextState = redoStack[0];
+      setRedoStack(redoStack.slice(1));
 
       // Add the current state to the undo stack before applying redo
       setUndoStack([...undoStack, { lines, sonificationPoints }]);

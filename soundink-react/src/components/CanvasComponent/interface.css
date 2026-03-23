@@ -97,9 +97,6 @@ html, body {
   transition: background-color 0.3s ease; /* Smooth transition */
 }
 
-/* .canvas-container.edit-mode-active {
-  background-color: #ff0000;
-} */
 
 /* SVG Drawing Area */
 .canvas-container svg {
@@ -162,11 +159,7 @@ button {
 }
 
 .color-button.active {
-  box-shadow: 
-    0 0 7px var(--shadowBorder),
-    0 0 7px var(--shadowColor),
-    0 0 9px var(--shadowColor),
-    0 0 13px var(--shadowColor);
+  box-shadow: 0 0 0 4px #ffffff, 0 0 10px rgba(255,255,255,0.5);
 }
 
 .gear-tab-wrapper {
@@ -176,19 +169,19 @@ button {
   background: white;
   border-radius: 0 30% 30% 0;
   box-shadow: 2px 2px 6px rgba(0,0,0,0.14);
-  padding: 4px 6px 4px 0;
+  padding: 3px 5px 3px 0;
   flex-shrink: 0;
 }
 
 .instrument-connector {
-  width: 5px;
-  height: 32px;
+  width: 3px;
+  height: 26px;
   flex-shrink: 0;
 }
 
 .instrument-select-button {
-  width: 32px !important;
-  height: 32px !important;
+  width: 26px !important;
+  height: 26px !important;
   background-color: transparent !important;
   border: none !important;
   border-radius: 0 !important;
@@ -351,18 +344,11 @@ button {
 } */
 
 
-.eraser-button.active, .trash-button.active, .edit-button.active
- {
-  box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowColor);
-}
-
+.eraser-button.active,
+.trash-button.active,
 .edit-button.active {
-  background-color: #ffffff;
-  border: 3px solid #FF61DF !important;
+  box-shadow: 0 0 0 3px #1a1a1a;
+  background-color: #e8e8e8;
 }
 
 .eraser-button:hover,
@@ -643,8 +629,8 @@ button {
 .close-modal-button::after {
   content: "×";
   color: white;
-  font-size: 26px;
-  font-weight: 400;
+  font-size: 32px;
+  font-weight: 300;
   line-height: 1;
 }
 
@@ -1651,11 +1637,7 @@ button:hover .instrument-sidebar-icon {
 }
 
 .color-option.active {
-  box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowColor);
+  box-shadow: 0 0 0 5px #ffffff;
 }
 
 .color-option:hover {
@@ -1665,27 +1647,23 @@ button:hover .instrument-sidebar-icon {
 .instrument-option-button {
   width: 60px;
   height: 60px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: 3px solid white;
+  background-color: #ffffff;
+  border: 2px solid #1a1a1a;
   border-radius: 25%;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .instrument-option-button.active {
-  border: 1px solid var(--shadowBorder);
-  box-shadow: 
-    0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowColor);
+  border: 2px solid #1a1a1a;
+  box-shadow: 0 0 0 5px #ffffff;
 }
 
 .instrument-option-button:hover {
-  background-color: #9c1825;
+  background-color: #f0f0f0;
   transform: scale(1.05);
 }
 

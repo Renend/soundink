@@ -66,6 +66,8 @@ html, body {
   gap: 12px;
   /* overflow-y: auto; */
   border: 3px solid var(--sideBarColor);
+  /* Scale the entire sidebar down when the viewport is too short to fit all buttons */
+  zoom: clamp(0.65, calc(100svh / 900px), 1);
 }
 
 /* 4e76bb blue */

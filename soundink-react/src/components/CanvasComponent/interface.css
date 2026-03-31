@@ -265,6 +265,10 @@ button {
   margin-top: 0;
 }
 
+.eraser-container {
+  margin-top: 16px;
+}
+
 .edit-container {
   margin-top: 0vh;
   margin-bottom: 10px !important;

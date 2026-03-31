@@ -1155,13 +1155,12 @@ const CanvasComponent = () => {
         const offsetX = currentPoint[0] - initialDragPoint[0];
         const offsetY = currentPoint[1] - initialDragPoint[1];
 
-        // Require at least 6px of movement before treating as a real drag.
-        // Below the threshold: don't move strokes, don't set wasDragged, so
-        // pointer-up will open the settings modal instead of committing an undo entry.
+        // Require at least 6px of movement before treating as a drag
         if (Math.hypot(offsetX, offsetY) <= 6) return;
 
         if (!didActuallyDragRef.current) {
-          setWasDragged(true); didActuallyDragRef.current = true;
+          setWasDragged(true); 
+          didActuallyDragRef.current = true;
         }
 
         const updatedLines = lines.map((line) => {

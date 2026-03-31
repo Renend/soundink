@@ -50,24 +50,26 @@ html, body {
   position: relative;
   left: 0;
   top: 0;
-  overflow: hidden;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
   margin-top: 0px;
   margin-left: 0px;
   height: 100%;
   max-width: 140px;
-  padding: 20px 12px;
+  padding: min(20px, 2.2vh) 12px;
   background: linear-gradient(90deg, var(--sideBarColor) 0%, var(--sideBarColor) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   /* box-sizing: border-box; */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  /* overflow-y: auto; */
+  gap: min(12px, 1.4vh);
   border: 3px solid var(--sideBarColor);
-  /* Scale the entire sidebar down when the viewport is too short to fit all buttons */
-  zoom: clamp(0.65, calc(100svh / 900px), 1);
+}
+
+.controls-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 /* 4e76bb blue */
@@ -114,7 +116,7 @@ html, body {
   align-items: center;
   /* display: grid; */
   grid-template-columns: repeat(1, 3fr);
-  gap: 2vh;
+  gap: min(2vh, 16px);
   width: 100%;
   justify-content: center;
   /* Center align the buttons */
@@ -268,7 +270,7 @@ button {
 }
 
 .eraser-container {
-  margin-top: 12px;
+  margin-top: min(12px, 1.4vh);
 }
 
 .edit-container {
@@ -287,7 +289,7 @@ button {
 
 .play-group {
   margin-top: 10px;
-  margin-bottom: 32px;
+  margin-bottom: min(32px, 3.6vh);
 }
 
 /* .loop-scale-group {
@@ -748,10 +750,10 @@ button:hover .instrument-sidebar-icon {
 .vertical-sliders-1 {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: min(6px, 0.7vh);
   width: 100%;
   margin-bottom: 0;
-  margin-top: 12px;
+  margin-top: min(12px, 1.4vh);
 }
 
 .vertical-sliders-2 {

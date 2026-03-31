@@ -83,13 +83,6 @@ html, body {
 /* 4e76bb blue */
 /* 6c8654 green */
 
-@media (max-height: 800px) {
-  .controls-container {
-    overflow: hidden !important;
-    max-width: 120px;
-    max-height: 700px;
-  }
-}
 
 /* Main container style */
 .canvas-container {
@@ -425,7 +418,6 @@ button {
   .edit-container,
   .grid-group,
   .save-load-buttons,
-  .play-group,
   .load-save-group,
   .scale-container {
     display: flex;
@@ -436,12 +428,7 @@ button {
     align-items: center;
     margin-top: 0;
   }
-
-  .play-group {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-  }
+}
 
 .play-stop-button {
   margin-top: 0px;

@@ -266,7 +266,7 @@ button {
 }
 
 .eraser-container {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .edit-container {
@@ -749,7 +749,7 @@ button:hover .instrument-sidebar-icon {
   gap: 0px;
   width: 100%;
   margin-bottom: 0;
-  margin-top: 0;
+  margin-top: 16px;
 }
 
 .vertical-sliders-2 {

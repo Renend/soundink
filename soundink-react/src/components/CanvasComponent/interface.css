@@ -46,7 +46,6 @@ html, body {
 
 /* Controls sidebar styling */
 .controls-container {
-  /* position: center; */
   position: relative;
   left: 0;
   top: 0;
@@ -57,19 +56,27 @@ html, body {
   margin-left: 0px;
   height: 100%;
   max-width: 140px;
-  padding: min(20px, 2.2vh) 12px;
   background: linear-gradient(90deg, var(--sideBarColor) 0%, var(--sideBarColor) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  /* box-sizing: border-box; */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: min(12px, 1.4vh);
   border: 3px solid var(--sideBarColor);
 }
 
 .controls-container::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
+}
+
+/* Inner scaler: zoom shrinks all children proportionally so they fit the viewport.
+   zoom affects layout size (unlike transform), so the scaled content fits the container. */
+.controls-scaler {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  zoom: clamp(0.6, calc(100vh / 920px), 1);
+  transform-origin: top left;
 }
 
 /* 4e76bb blue */
@@ -116,7 +123,7 @@ html, body {
   align-items: center;
   /* display: grid; */
   grid-template-columns: repeat(1, 3fr);
-  gap: min(2vh, 16px);
+  gap: 2vh;
   width: 100%;
   justify-content: center;
   /* Center align the buttons */
@@ -144,8 +151,8 @@ button {
 
 .color-button {
   background-color: #ffffff;
-  width: min(75px, 8.3vh) !important;
-  height: min(75px, 8.3vh) !important;
+  width: 75px !important;
+  height: 75px !important;
   aspect-ratio: 1 / 1;
   border-radius: 30% !important;
   border-style: solid;
@@ -179,13 +186,13 @@ button {
 
 .instrument-connector {
   width: 3px;
-  height: min(26px, 2.9vh);
+  height: 26px;
   flex-shrink: 0;
 }
 
 .instrument-select-button {
-  width: min(26px, 2.9vh) !important;
-  height: min(26px, 2.9vh) !important;
+  width: 26px !important;
+  height: 26px !important;
   background-color: transparent !important;
   border: none !important;
   border-radius: 0 !important;
@@ -262,7 +269,7 @@ button {
   display: flex;
   gap: 8px;
   width: 100%;
-  height: min(50px, 5.6vh);
+  height: 50px;
   justify-content: center;
   align-items: center;
   margin-bottom: 0;
@@ -270,7 +277,7 @@ button {
 }
 
 .eraser-container {
-  margin-top: min(12px, 1.4vh);
+  margin-top: 12px;
 }
 
 .edit-container {
@@ -289,7 +296,7 @@ button {
 
 .play-group {
   margin-top: 10px;
-  margin-bottom: min(32px, 3.6vh);
+  margin-bottom: 32px;
 }
 
 /* .loop-scale-group {
@@ -309,8 +316,8 @@ button {
 .save-button,
 .load-button,
 .scale-button {
-  width: min(42px, 4.7vh);
-  height: min(42px, 4.7vh);
+  width: 42px;
+  height: 42px;
   padding: 0px;
   margin: 0 auto;
   border: 1px solid rgba(0,0,0,0.08);
@@ -426,8 +433,8 @@ button {
 
 .play-stop-button {
   margin-top: 0px;
-  width: min(95px, 10.5vh);
-  height: min(95px, 10.5vh);
+  width: 95px;
+  height: 95px;
   padding: 0px;
   margin: 0 auto;
   border: 1px solid rgba(0,0,0,0.08);
@@ -750,10 +757,10 @@ button:hover .instrument-sidebar-icon {
 .vertical-sliders-1 {
   display: flex;
   flex-direction: column;
-  gap: min(6px, 0.7vh);
+  gap: 6px;
   width: 100%;
   margin-bottom: 0;
-  margin-top: min(12px, 1.4vh);
+  margin-top: 12px;
 }
 
 .vertical-sliders-2 {

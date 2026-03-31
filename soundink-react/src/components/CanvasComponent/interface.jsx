@@ -1781,6 +1781,7 @@ const CanvasComponent = () => {
   return (
     <div className="main-container">
       <div className={`controls-container ${selectedSlot ? 'menu-active' : ''}`}>
+        <div className="controls-scaler">
         <div className="play-group">
           <button
             ref={playStopButtonRef} // Add a ref here
@@ -2074,9 +2075,10 @@ const CanvasComponent = () => {
         <svg ref={svgRef} /* other attributes */>
           {/* SVG content */}
         </svg>
+        </div>{/* end controls-scaler */}
       </div>
 
-      <div 
+      <div
         // className="canvas-container">
         className={`canvas-container ${isEditMode ? 'edit-mode-active' : ''}`}
         // style={{

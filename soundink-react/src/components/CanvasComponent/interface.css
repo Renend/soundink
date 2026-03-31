@@ -277,8 +277,8 @@ button {
   height: auto;
   justify-content: center;
   align-items: center;
-  margin-bottom: 0;
-  margin-top: 0;
+  margin-top: 10px;
+  margin-bottom: 8px;
 }
 
 .eraser-container {
@@ -299,10 +299,6 @@ button {
   margin-bottom: 0px;
 } */
 
-.play-group {
-  margin-top: 10px;
-  margin-bottom: 8px;
-}
 
 /* .loop-scale-group {
   margin-top: 0px;

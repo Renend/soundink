@@ -144,8 +144,8 @@ button {
 
 .color-button {
   background-color: #ffffff;
-  width: 75px !important;
-  height: 75px !important;
+  width: min(75px, 8.3vh) !important;
+  height: min(75px, 8.3vh) !important;
   aspect-ratio: 1 / 1;
   border-radius: 30% !important;
   border-style: solid;
@@ -179,13 +179,13 @@ button {
 
 .instrument-connector {
   width: 3px;
-  height: 26px;
+  height: min(26px, 2.9vh);
   flex-shrink: 0;
 }
 
 .instrument-select-button {
-  width: 26px !important;
-  height: 26px !important;
+  width: min(26px, 2.9vh) !important;
+  height: min(26px, 2.9vh) !important;
   background-color: transparent !important;
   border: none !important;
   border-radius: 0 !important;
@@ -262,7 +262,7 @@ button {
   display: flex;
   gap: 8px;
   width: 100%;
-  height: 50px;
+  height: min(50px, 5.6vh);
   justify-content: center;
   align-items: center;
   margin-bottom: 0;
@@ -309,8 +309,8 @@ button {
 .save-button,
 .load-button,
 .scale-button {
-  width: 42px;
-  height: 42px;
+  width: min(42px, 4.7vh);
+  height: min(42px, 4.7vh);
   padding: 0px;
   margin: 0 auto;
   border: 1px solid rgba(0,0,0,0.08);
@@ -426,8 +426,8 @@ button {
 
 .play-stop-button {
   margin-top: 0px;
-  width: 95px;
-  height: 95px;
+  width: min(95px, 10.5vh);
+  height: min(95px, 10.5vh);
   padding: 0px;
   margin: 0 auto;
   border: 1px solid rgba(0,0,0,0.08);

@@ -56,18 +56,20 @@ html, body {
   margin-left: 0px;
   height: 100%;
   min-height: 100vh;
+  width: 140px;
   max-width: 140px;
   background: linear-gradient(90deg, var(--sideBarColor) 0%, var(--sideBarColor) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   border: 3px solid var(--sideBarColor);
+  zoom: clamp(0.55, min(calc(100vh / 920px), calc(100vw / 1050px)), 1);
 }
 
 .controls-container::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
 }
 
-/* Inner scaler: zoom shrinks all children proportionally so they fit the viewport.
-   zoom affects layout size (unlike transform), so the scaled content fits the container. */
+/* Inner scaler: zoom is now on controls-container so the entire sidebar (background + content)
+   scales together. This div just handles the flex column layout. */
 .controls-scaler {
   display: flex;
   flex-direction: column;
@@ -76,8 +78,6 @@ html, body {
   padding: 20px 12px;
   width: 100%;
   box-sizing: border-box;
-  zoom: clamp(0.6, calc(100vh / 920px), 1);
-  transform-origin: top left;
 }
 
 /* 4e76bb blue */
@@ -269,7 +269,7 @@ button {
   margin-top: 0;
 }
 
-/* play-group must be height: auto so the 95px button doesn't overflow into the next row */
+/* play-group must be height: auto so the button doesn't overflow into the next row */
 .play-group {
   display: flex;
   gap: 8px;
@@ -428,8 +428,8 @@ button {
 
 .play-stop-button {
   margin-top: 0px;
-  width: 95px;
-  height: 95px;
+  width: 80px;
+  height: 80px;
   padding: 0px;
   margin: 0 auto;
   border: 1px solid rgba(0,0,0,0.08);

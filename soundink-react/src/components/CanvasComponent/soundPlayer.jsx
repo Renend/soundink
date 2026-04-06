@@ -34,7 +34,16 @@ const generateSoundFiles = () => {
 };
 
 // Initialize the Web Audio context globally
+// Note: iOS Safari suspends AudioContext created outside a user gesture.
+// Call resumeAudioContext() inside any user interaction handler before playing.
 let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+export const resumeAudioContext = () => {
+  if (audioCtx.state === 'suspended') {
+    return audioCtx.resume();
+  }
+  return Promise.resolve();
+};
 
 const MAX_CACHE_SIZE = 50; // Set a limit for the cache size
 const MAX_ACTIVE_SOURCES = 20;

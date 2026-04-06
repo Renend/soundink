@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import './interface.css'; // Importing the associated CSS file for styles
-import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, numDotsX, numDotsY, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
+import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, resumeAudioContext, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, numDotsX, numDotsY, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
 import { mapNoteToSampleNumber, scales } from './soundMappings';
 import { Canvg } from 'canvg';
 import pointInPolygon from 'point-in-polygon'; // Import the library
@@ -1489,6 +1489,7 @@ const CanvasComponent = () => {
     // console.time('Sonification');
     if (isPlaying) return;
 
+    await resumeAudioContext(); // iOS Safari requires AudioContext to be resumed inside a user gesture
     setIsPlaying(true);
     playbackStopped.current = false;
 

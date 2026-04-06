@@ -58,7 +58,7 @@ import { usePlaybackSpeed } from './playbackSpeedContext';
 // Importing other utilities
 import { useMediaQuery } from 'react-responsive';
 import { v4 as uuidv4 } from 'uuid';
-import { stopSoundsForLine, preloadSounds } from './soundPlayer';
+import { stopSoundsForLine, preloadSounds, resumeAudioContext } from './soundPlayer';
 import { getSvgPathFromStroke } from './utils'; // Utility function to convert stroke to SVG path
 import { getStroke } from 'perfect-freehand'; // Used to calculate stroke paths for drawing
 import { getMapRowToNote, setScale } from './soundMappings'; // Function to map rows to musical notes
@@ -114,6 +114,7 @@ export {
     uuidv4,
     stopSoundsForLine,
     preloadSounds,
+    resumeAudioContext,
     getSvgPathFromStroke,
     getStroke,
     getMapRowToNote,

@@ -70,7 +70,7 @@ const CanvasComponent = () => {
   const [selectedLineIds, setSelectedLineIds] = useState([]);
   const selectedLineIdsRef = useRef([]);
   const [isSweepSelecting, setIsSweepSelecting] = useState(false);
-  const [selectionTrail, setSelectionTrail] = useState([]);
+  const [boxSelectCurrent, setBoxSelectCurrent] = useState(null);
   const isSweepErasingRef = useRef(false);
   const sweepEraseSnapshotRef = useRef(null);
   const sweepErasedRef = useRef(false);
@@ -648,7 +648,7 @@ const CanvasComponent = () => {
     setDraggedLineIds([]);
     setIsDragging(false);
     setIsSweepSelecting(false);
-    setSelectionTrail([]);
+    setBoxSelectCurrent(null);
   }
 
   useEffect(() => {
@@ -977,6 +977,14 @@ const CanvasComponent = () => {
     return false;
   };
 
+  const lineIntersectsBox = (line, x1, y1, x2, y2) => {
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+    return line.points.some(([px, py]) => px >= minX && px <= maxX && py >= minY && py <= maxY);
+  };
+
   const rebuildDraggedLineIntersections = (updatedLines, movedLineIds) => {
     const updatedIntersectedDots = { ...intersectedDots.current };
 
@@ -1034,7 +1042,7 @@ const CanvasComponent = () => {
       setDraggedLine(clickedLine);
       setDraggedLineIds(idsToDrag);
 
-        pendingDragSnapshot.current = { lines, sonificationPoints };
+        pendingDragSnapshot.current = { lines, sonificationPoints, idInstrumentMap };
         setIsDragging(true);
         setInitialDragPoint(clickPoint);
         setWasDragged(false); didActuallyDragRef.current = false;
@@ -1055,7 +1063,7 @@ const CanvasComponent = () => {
         setDraggedLineIds([]);
         setSelectedLineIds([]);
         setIsSweepSelecting(true);
-        setSelectionTrail([clickPoint]);
+        setBoxSelectCurrent(null);
         setWasDragged(false); didActuallyDragRef.current = false;
       }
 
@@ -1112,7 +1120,7 @@ const CanvasComponent = () => {
 
       if (clickedLine) {
         // Single-click delete: remove the tapped stroke immediately
-        const snapshot = { lines, sonificationPoints };
+        const snapshot = { lines, sonificationPoints, idInstrumentMap };
         for (const column in intersectedDots.current) {
           for (const row in intersectedDots.current[column]) {
             if (intersectedDots.current[column][row].lineId === clickedLine.lineId) {
@@ -1130,7 +1138,7 @@ const CanvasComponent = () => {
       } else {
         // No stroke under finger — start sweep erase
         isSweepErasingRef.current = true;
-        sweepEraseSnapshotRef.current = { lines, sonificationPoints };
+        sweepEraseSnapshotRef.current = { lines, sonificationPoints, idInstrumentMap };
         sweepErasedRef.current = false;
         lastErasePointRef.current = clickPoint;
       }
@@ -1181,21 +1189,17 @@ const CanvasComponent = () => {
       if (isSweepSelecting) {
         setWasDragged(true); didActuallyDragRef.current = true;
 
-        setSelectionTrail((prevTrail) => {
-          const nextTrail = prevTrail.length > 20
-            ? [...prevTrail.slice(-40), currentPoint]
-            : [...prevTrail, currentPoint];
-          
-          setSelectedLineIds(prevSelected => {
-            const touchedIds = lines
-              .filter((line) => lineTouchesSweepPath(line, nextTrail))
-              .map((line) => line.lineId);
+        setBoxSelectCurrent(currentPoint);
 
-            return [...new Set([...prevSelected, ...touchedIds])];
-          });
-
-          return nextTrail;
-        });
+        const startPoint = clickPointRef.current;
+        if (startPoint) {
+          const [x1, y1] = startPoint;
+          const [x2, y2] = currentPoint;
+          const newSelectedIds = lines
+            .filter((line) => !line.isEraser && lineIntersectsBox(line, x1, y1, x2, y2))
+            .map((line) => line.lineId);
+          setSelectedLineIds(newSelectedIds);
+        }
 
         return;
       }
@@ -1307,7 +1311,7 @@ const CanvasComponent = () => {
 
       if (isSweepSelecting) {
         setIsSweepSelecting(false);
-        setSelectionTrail([]);
+        setBoxSelectCurrent(null);
 
         // click on empty space without dragging = unselect all
         if (!wasDragged) {
@@ -1476,7 +1480,7 @@ const CanvasComponent = () => {
       setIntersectedDotsState({ ...updatedIntersectedDots });
 
       // Save the new line and reset the current state
-      setUndoStack([...undoStack, { lines, sonificationPoints }]);
+      setUndoStack([...undoStack, { lines, sonificationPoints, idInstrumentMap }]);
       setLines((prevLines) => [...prevLines, newLine]);
       intersectedDots.current = updatedIntersectedDots; // IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST // IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST// IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST// IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST
       setRedoStack([]);
@@ -1557,7 +1561,7 @@ const CanvasComponent = () => {
     const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
       ? activeIds
       : [line.lineId];
-    setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
+    setUndoStack(prev => [...prev, { lines, sonificationPoints, idInstrumentMap }]);
     setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
@@ -1581,7 +1585,7 @@ const CanvasComponent = () => {
     const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
       ? activeIds
       : [line.lineId];
-    setUndoStack(prev => [...prev, { lines, sonificationPoints }]);
+    setUndoStack(prev => [...prev, { lines, sonificationPoints, idInstrumentMap }]);
     setRedoStack([]);
     setLines((prevLines) =>
       prevLines.map((l) =>
@@ -1599,68 +1603,46 @@ const CanvasComponent = () => {
     setSelectedLine(null); // Close the modal after updating
   };
 
+  const rebuildIntersectionsFromLines = (targetLines) => {
+    const newIntersectedDots = {};
+    const spatialHash = createSpatialHash(gridConfig);
+    targetLines.forEach(line => {
+      if (!line.isEraser) {
+        calculateIntersections(line, gridConfig, newIntersectedDots, spatialHash);
+      }
+    });
+    intersectedDots.current = newIntersectedDots;
+  };
+
   // Undo and redo logic for managing drawing history
   const handleUndo = () => {
     if (undoStack.length > 0) {
       const previousState = undoStack[undoStack.length - 1];
       setUndoStack(undoStack.slice(0, -1));
-
-      // Add current state to redo stack before applying undo
-      setRedoStack([{ lines, sonificationPoints }, ...redoStack]);
-
-      // Set lines and sonification points to the previous state
+      setRedoStack([{ lines, sonificationPoints, idInstrumentMap }, ...redoStack]);
       setLines(previousState.lines);
       setSonificationPoints(previousState.sonificationPoints);
-
-      // Clear and rebuild intersection data based on the undone lines
-      intersectedDots.current = {}; // Reset first to avoid data carryover
-
-      previousState.lines.forEach(line => {
-        if (!line.erased) {
-          // If the line was not erased, restore its intersection points
-          if (line.intersections) {
-            Object.entries(line.intersections).forEach(([column, rows]) => {
-              if (!intersectedDots.current[column]) intersectedDots.current[column] = {};
-              Object.entries(rows).forEach(([row, intersectionData]) => {
-                intersectedDots.current[column][row] = intersectionData;
-              });
-            });
-          }
-        }
-      });
+      if (previousState.idInstrumentMap) {
+        setIdInstrumentMap(previousState.idInstrumentMap);
+        idInstrumentMapRef.current = previousState.idInstrumentMap;
+      }
+      rebuildIntersectionsFromLines(previousState.lines);
     }
   };
 
   // Updated redo functionality with intersection handling
   const handleRedo = () => {
     if (redoStack.length > 0) {
-      // Retrieve the next state from redo stack
       const nextState = redoStack[0];
       setRedoStack(redoStack.slice(1));
-
-      // Add the current state to the undo stack before applying redo
-      setUndoStack([...undoStack, { lines, sonificationPoints }]);
-
-      // Update lines and sonification points with the redone state
+      setUndoStack([...undoStack, { lines, sonificationPoints, idInstrumentMap }]);
       setLines(nextState.lines);
       setSonificationPoints(nextState.sonificationPoints);
-
-      // Clear and rebuild intersection data based on the redone lines
-      intersectedDots.current = {}; // Reset to avoid overlapping data
-
-      nextState.lines.forEach(line => {
-        if (!line.erased) {
-          // If the line is visible (not erased), re-add its intersection points
-          if (line.intersections) {
-            Object.entries(line.intersections).forEach(([column, rows]) => {
-              if (!intersectedDots.current[column]) intersectedDots.current[column] = {};
-              Object.entries(rows).forEach(([row, intersectionData]) => {
-                intersectedDots.current[column][row] = intersectionData;
-              });
-            });
-          }
-        }
-      });
+      if (nextState.idInstrumentMap) {
+        setIdInstrumentMap(nextState.idInstrumentMap);
+        idInstrumentMapRef.current = nextState.idInstrumentMap;
+      }
+      rebuildIntersectionsFromLines(nextState.lines);
     }
   };
 
@@ -2108,6 +2090,19 @@ const CanvasComponent = () => {
 
           {allStrokes}
           {currentLine.length > 0 && <path d={currentStroke} fill={colorSlots[currentColor]} />}
+          {isSweepSelecting && clickPointRef.current && boxSelectCurrent && (
+            <rect
+              x={Math.min(clickPointRef.current[0], boxSelectCurrent[0])}
+              y={Math.min(clickPointRef.current[1], boxSelectCurrent[1])}
+              width={Math.abs(boxSelectCurrent[0] - clickPointRef.current[0])}
+              height={Math.abs(boxSelectCurrent[1] - clickPointRef.current[1])}
+              fill="rgba(0, 150, 180, 0.08)"
+              stroke="rgba(0, 150, 180, 0.55)"
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              pointerEvents="none"
+            />
+          )}
         </svg>
       </div>
 

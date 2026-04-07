@@ -1042,16 +1042,15 @@ button:hover .instrument-sidebar-icon {
   border: 2px solid var(--menuColor);
   padding: 40px;
   border-radius: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  max-width: 350px; /* Adjust to fit within the screen */
-  max-height: 50%; /* Restrict the height */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  max-width: 350px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px; /* Add space between items */
-  overflow-y: auto; /* Ensure content does not overflow */
-  font-family: 'Roboto', sans-serif; /* Apply font */
+  gap: 10px;
+  overflow: visible;
+  font-family: 'Roboto', sans-serif;
 }
 
 .scale-options {

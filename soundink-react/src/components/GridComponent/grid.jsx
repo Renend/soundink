@@ -163,9 +163,9 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
                 drawSmoothDot(ctx, x, y, 'rgba(255, 88, 51, 0.11)', true); // Mild glow for scanned dots
             } else if (isBackgroundColor) {
                 // For dots erased with the soft eraser, draw with the regular dot color
-                drawSmoothDot(ctx, x, y, 'rgba(228, 193, 158, 0.5)', false);
+                drawSmoothDot(ctx, x, y, 'rgba(0, 150, 180, 0.18)', false);
             } else {
-                drawSmoothDot(ctx, x, y, 'rgba(228, 193, 158, 0.5)', false); // Regular dot color
+                drawSmoothDot(ctx, x, y, 'rgba(0, 150, 180, 0.18)', false); // Regular dot color
             }
         }
     };

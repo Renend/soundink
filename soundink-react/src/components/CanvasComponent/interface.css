@@ -458,7 +458,7 @@ button {
 }
 
 .stop-mode {
-  background-color: #9c1825 !important;
+  background-color: #d44f5e !important;
 }
 
 .play-stop-button:hover {
@@ -524,7 +524,7 @@ button {
 }
 
 .instrument-option-button:hover {
-  background-color: #9c1825;
+  background-color: #d44f5e;
   transform: scale(1.05);
   border: 1px solid var(--shadowBorder);
   box-shadow: 
@@ -1423,7 +1423,7 @@ button:hover .instrument-sidebar-icon {
 }
 
 .popup-buttons button:hover {
-  background-color: #9c1825;
+  background-color: #d44f5e;
   transform: scale(1.05);
   border: 1px solid var(--shadowBorder);
   box-shadow: 

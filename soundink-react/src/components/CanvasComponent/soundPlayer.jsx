@@ -33,16 +33,38 @@ const generateSoundFiles = () => {
   return soundFiles;
 };
 
-// Initialize the Web Audio context globally
-// Note: iOS Safari suspends AudioContext created outside a user gesture.
-// Call resumeAudioContext() inside any user interaction handler before playing.
-let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// AudioContext is created lazily on first user gesture so iOS Safari doesn't suspend it.
+let audioCtx = null;
+let masterGainNode = null;
+let limiterNode = null;
 
-export const resumeAudioContext = () => {
-  if (audioCtx.state === 'suspended') {
-    return audioCtx.resume();
+const getAudioContext = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    masterGainNode = audioCtx.createGain();
+    masterGainNode.gain.value = 0.8;
+
+    limiterNode = audioCtx.createDynamicsCompressor();
+    limiterNode.threshold.setValueAtTime(-6, audioCtx.currentTime);
+    limiterNode.knee.setValueAtTime(0, audioCtx.currentTime);
+    limiterNode.ratio.setValueAtTime(20, audioCtx.currentTime);
+    limiterNode.attack.setValueAtTime(0.003, audioCtx.currentTime);
+    limiterNode.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+    masterGainNode.connect(limiterNode);
+    limiterNode.connect(audioCtx.destination);
   }
-  return Promise.resolve();
+  return audioCtx;
+};
+
+// Must be called inside a user gesture handler (click/tap) before any audio plays.
+// On iOS Safari, the AudioContext must be created AND resumed within a user gesture.
+export const resumeAudioContext = async () => {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    await ctx.resume();
+  }
 };
 
 const MAX_CACHE_SIZE = 50; // Set a limit for the cache size
@@ -54,31 +76,15 @@ const bufferCache = {};
 // Store references to active audio sources
 let activeSources = [];
 
-// Master gain node to control overall volume
-const masterGainNode = audioCtx.createGain();
-masterGainNode.gain.value = 0.8; // Set the initial master volume (adjustable)
-
-// Create a limiter (dynamics compressor) to prevent clipping
-const limiterNode = audioCtx.createDynamicsCompressor();
-limiterNode.threshold.setValueAtTime(-6, audioCtx.currentTime); // Start limiting at -6 dB
-limiterNode.knee.setValueAtTime(0, audioCtx.currentTime); // Hard knee for abrupt limiting
-limiterNode.ratio.setValueAtTime(20, audioCtx.currentTime); // High ratio, acts like a limiter
-limiterNode.attack.setValueAtTime(0.003, audioCtx.currentTime); // Fast attack to catch peaks
-limiterNode.release.setValueAtTime(0.25, audioCtx.currentTime); // Short release
-
-// Connect the master gain to the limiter, and then connect to audio context destination
-masterGainNode.connect(limiterNode);
-limiterNode.connect(audioCtx.destination);
-
+// Preload only fetches and stores raw ArrayBuffers in IndexedDB.
+// Decoding into AudioBuffers is deferred until first playback (after user gesture).
 export const preloadSounds = async () => {
-  const soundFiles = generateSoundFiles(); // Generate all sound file paths dynamically
+  const soundFiles = generateSoundFiles();
   const db = await openDB(DB_NAME, STORE_NAME);
 
   try {
     for (const filePath of soundFiles) {
       let arrayBuffer = await getFromDB(db, STORE_NAME, filePath);
-      let audioBuffer;
-
       if (!arrayBuffer) {
         const response = await fetch(filePath);
         arrayBuffer = await response.arrayBuffer();
@@ -87,9 +93,6 @@ export const preloadSounds = async () => {
       } else {
         console.log(`Loaded from cache: ${filePath}`);
       }
-
-      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-      bufferCache[filePath] = audioBuffer; // Store in memory cache
     }
   } catch (error) {
     console.error('Error preloading sounds:', error);
@@ -114,7 +117,7 @@ const loadAudioBuffer = async (filePath) => {
     arrayBuffer = await response.arrayBuffer();
     await saveToDB(db, STORE_NAME, filePath, arrayBuffer);
   }
-  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+  const audioBuffer = await getAudioContext().decodeAudioData(arrayBuffer.slice(0));
   bufferCache[filePath] = audioBuffer; // Cache the loaded buffer
   return audioBuffer;
 };
@@ -149,13 +152,16 @@ export const playSound = async (
   lineId,
   colorInstrumentMap,
   accent = false,
-  audioContext = audioCtx, // Default to global audioCtx if not provided
+  audioContext = null, // If null, uses the global lazy-initialized context
   destination = null // Default to null if not provided
 ) => {
   if (!color || !note || !colorInstrumentMap[color]) {
     console.error("Invalid sound parameters:", { color, note, colorInstrumentMap });
     return;
   }
+
+  // Use the provided audioContext (e.g. for export), or fall back to the global lazy context
+  if (!audioContext) audioContext = getAudioContext();
 
   // Calculate playback speed from bpm
   const playbackSpeed = Math.round(60000 / bpm);
@@ -227,7 +233,7 @@ export const playSound = async (
   if (destination) {
     gainNode.connect(destination);
   } else {
-    gainNode.connect(masterGainNode); // Connect each gainNode to the master gain node
+    gainNode.connect(masterGainNode); // masterGainNode is initialized by getAudioContext()
   }
 
   const attack = settings.attack;
@@ -278,6 +284,8 @@ export const stopSoundsForLine = (lineId) => {
 
 // Function to adjust the master volume
 export const setMasterVolume = (volume) => {
-  masterGainNode.gain.value = Math.max(0, Math.min(volume, 1)); // Volume range: 0 (mute) to 1 (full)
+  if (masterGainNode) {
+    masterGainNode.gain.value = Math.max(0, Math.min(volume, 1)); // Volume range: 0 (mute) to 1 (full)
+  }
 };
 

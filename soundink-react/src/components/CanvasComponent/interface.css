@@ -49,9 +49,7 @@ html, body {
   position: relative;
   left: 0;
   top: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
+  overflow: hidden;
   margin-top: 0px;
   margin-left: 0px;
   height: 100%;
@@ -64,9 +62,6 @@ html, body {
   zoom: clamp(0.55, min(calc(100vh / 920px), calc(100vw / 1050px)), 1);
 }
 
-.controls-container::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
 
 /* Inner scaler: zoom is now on controls-container so the entire sidebar (background + content)
    scales together. This div just handles the flex column layout. */
@@ -1367,69 +1362,81 @@ button:hover .instrument-sidebar-icon {
 
 /* Pop-up content styling */
 .popup-content {
-  background: var(--buttonColor);
-  padding: 20px;
+  background: var(--sideBarColor);
+  padding: 28px 32px;
   border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   z-index: 1001;
   max-width: 350px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #ffd500;
+  color: var(--buttonColor);
 }
 
 .popup-content h2 {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-size: 18px;
   text-align: center;
-  color: #ffd500;
+  color: var(--buttonColor);
 }
 
 .popup-content p {
   text-align: center;
-  color: #ffd500;
+  color: var(--buttonColor);
+  opacity: 0.85;
+  font-size: 0.9em;
 }
 
 .popup-checkboxes {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .popup-checkboxes label {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--menuTextColor);
+  color: var(--buttonColor);
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.popup-checkboxes input[type="checkbox"] {
+  accent-color: var(--buttonColor);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .popup-buttons {
   display: flex;
-  gap: 20px;
+  gap: 16px;
+  margin-top: 4px;
 }
 
 .popup-buttons button {
-  background-color: #901e29;
-  border: 2px solid #901e29;
-  border-radius: 30%;
-  padding: 10px 20px;
+  background-color: var(--buttonColor);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  color: #ffd500;
+  transition: opacity 0.2s, transform 0.15s;
+  color: var(--sideBarColor);
+  font-weight: 600;
+  font-size: 0.95em;
 }
 
 .popup-buttons button:hover {
-  background-color: #d44f5e;
-  transform: scale(1.05);
-  border: 1px solid var(--shadowBorder);
-  box-shadow: 
+  opacity: 0.85;
+  transform: scale(1.04);
+  box-shadow:
     0 0 5px var(--shadowBorder),
-    0 0 3px var(--shadowColor),
-    0 0 5px var(--shadowColor),
-    0 0 7px var(--shadowColor);
+    0 0 8px var(--shadowColor);
 }
 
 /* ////////////////////////////////////////////////////////////////////////////////////////////////////// */

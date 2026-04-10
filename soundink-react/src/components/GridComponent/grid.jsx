@@ -71,10 +71,10 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
         const glowColor = getContrastingGlowColor(color);
 
         const glowLayers = [
-            { blur: 30, sizeMultiplier: 4, color: `${glowColor}33` },  // Softer outer glow
-            { blur: 20, sizeMultiplier: 2, color: `${glowColor}55` }, // Mid glow
-            { blur: 10, sizeMultiplier: 0.7, color: `${glowColor}99` }, // Inner glow
-            { blur: 5, sizeMultiplier: 0.1, color: `${glowColor}CC` } // Core glow, slightly transparent
+            { blur: 20, sizeMultiplier: 2.2, color: `${glowColor}22` }, // Outer glow
+            { blur: 14, sizeMultiplier: 1.4, color: `${glowColor}44` }, // Mid glow
+            { blur: 9,  sizeMultiplier: 0.9, color: `${glowColor}99` }, // Inner glow
+            { blur: 4,  sizeMultiplier: 0.1, color: `${glowColor}CC` }  // Core glow
         ];
     
         glowLayers.forEach(({ blur, sizeMultiplier, color }) => {

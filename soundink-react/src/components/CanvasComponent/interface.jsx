@@ -457,9 +457,11 @@ const CanvasComponent = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = 'sonification.webm';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
 
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       console.log("Audio export completed.");
     };
 
@@ -504,12 +506,11 @@ const CanvasComponent = () => {
       }
     }
 
-    // Ensure all audio is played before stopping the recorder
-    const totalDuration = playbackSpeedRef.current * (gridConfigRef.current.numDotsX - firstColumn) * (loops + 1);
+    // Small buffer to ensure the last note finishes before stopping the recorder
     setTimeout(() => {
       recorder.stop();
       console.log("Recorder stopped.");
-    }, totalDuration);
+    }, 600);
   };
 
   const cancelSaveDrawing = () => {
@@ -1663,7 +1664,8 @@ const CanvasComponent = () => {
     const [saveJson, setSaveJson] = useState(true);
     const [saveImage, setSaveImage] = useState(true);
     const [saveAudio, setSaveAudio] = useState(true);
-    const [audioLoops, setAudioLoops] = useState(0);
+
+    const audioLoops = gridConfig.numDotsX >= 48 ? 0 : 3;
 
     const handleSave = () => {
       onSave({ saveJson, saveImage, saveAudio, audioLoops });
@@ -1681,7 +1683,7 @@ const CanvasComponent = () => {
                 checked={saveJson}
                 onChange={(e) => setSaveJson(e.target.checked)}
               />
-              Save as JSON
+              Save Project
             </label>
             <label>
               <input
@@ -1689,7 +1691,7 @@ const CanvasComponent = () => {
                 checked={saveImage}
                 onChange={(e) => setSaveImage(e.target.checked)}
               />
-              Save as Image
+              Save Image
             </label>
             <label>
               <input
@@ -1697,23 +1699,8 @@ const CanvasComponent = () => {
                 checked={saveAudio}
                 onChange={(e) => setSaveAudio(e.target.checked)}
               />
-              Save as Audio
+              Save Audio
             </label>
-            {saveAudio && (
-              <div style={{ marginLeft: '24px', marginTop: '8px' }}>
-                <label style={{ fontSize: '0.9em', color: '#666' }}>
-                  Loops: {audioLoops}
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    value={audioLoops}
-                    onChange={(e) => setAudioLoops(Number(e.target.value))}
-                    style={{ width: '100%', marginTop: '4px' }}
-                  />
-                </label>
-              </div>
-            )}
           </div>
           <div className="popup-buttons">
             <button onClick={handleSave}>Download</button>

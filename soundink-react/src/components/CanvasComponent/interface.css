@@ -1686,7 +1686,7 @@ Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
 
   .play-group {
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   /* Color buttons — shrink and tighten gap */
@@ -1696,7 +1696,7 @@ Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 
   .color-group {
-    gap: 8px;
+    gap: 13px;
   }
 
   /* Smaller gear connector */
@@ -1718,7 +1718,7 @@ Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 
   .vertical-sliders-1 {
-    gap: 7px;
+    gap: 10px;
     margin-top: 6px;
   }
 

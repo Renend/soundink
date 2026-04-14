@@ -1664,3 +1664,106 @@ button:hover .instrument-sidebar-icon {
   margin-top: 1px;
 }
 
+/*
+
+Small iPad landscape (iPadOS 15, ~1024×768)
+Targets landscape orientation with max 768px viewport height.
+Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
+
+*/
+@media (orientation: landscape) and (max-height: 768px) {
+
+  .controls-scaler {
+    gap: 7px;
+    padding: 10px 12px;
+  }
+
+  /* Play button */
+  .play-stop-button {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .play-group {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* Color buttons — shrink and tighten gap */
+  .color-button {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .color-group {
+    gap: 8px;
+  }
+
+  /* Smaller gear connector */
+  .instrument-connector {
+    height: 20px;
+  }
+
+  .instrument-select-button {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* Sliders — shorten each row and tighten group */
+  .brush-size-group,
+  .slider-group,
+  .grid-slider-group,
+  .volume-slider-group {
+    height: 38px;
+  }
+
+  .vertical-sliders-1 {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  /* Button rows */
+  .eraser-container,
+  .steps-group,
+  .grid-scale-row,
+  .load-save-group {
+    height: 40px;
+    gap: 6px;
+  }
+
+  .eraser-container {
+    margin-top: 6px;
+  }
+
+  /* All square icon buttons */
+  .eraser-button,
+  .trash-button,
+  .undo,
+  .redo,
+  .grid-button,
+  .edit-button,
+  .save-button,
+  .load-button,
+  .scale-button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* Slider thumbs */
+  .brush-size-group input[type="range"]::-webkit-slider-thumb,
+  .slider-group input[type="range"]::-webkit-slider-thumb,
+  .grid-slider-group input[type="range"]::-webkit-slider-thumb,
+  .volume-slider-group input[type="range"]::-webkit-slider-thumb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brush-size-group input[type="range"]::-moz-range-thumb,
+  .slider-group input[type="range"]::-moz-range-thumb,
+  .grid-slider-group input[type="range"]::-moz-range-thumb,
+  .volume-slider-group input[type="range"]::-moz-range-thumb {
+    width: 34px;
+    height: 34px;
+  }
+}
+

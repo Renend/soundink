@@ -1673,39 +1673,39 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
 @media (orientation: landscape) and (max-height: 820px) {
 
   .controls-scaler {
-    gap: 7px;
-    padding: 10px 12px;
+    gap: 9px;
+    padding: 12px 12px;
   }
 
   /* Play button */
   .play-stop-button {
-    width: 68px !important;
-    height: 68px !important;
+    width: 72px !important;
+    height: 72px !important;
   }
 
   .play-group {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 
-  /* Color buttons — shrink and tighten gap */
+  /* Color buttons */
   .color-button {
-    width: 58px !important;
-    height: 58px !important;
+    width: 63px !important;
+    height: 63px !important;
   }
 
   .color-group {
-    gap: 13px;
+    gap: 15px;
   }
 
   /* Smaller gear connector */
   .instrument-connector {
-    height: 20px;
+    height: 22px;
   }
 
   .instrument-select-button {
-    width: 22px !important;
-    height: 22px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
 
   /* Sliders — shorten each row and tighten group */
@@ -1713,12 +1713,12 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   .slider-group,
   .grid-slider-group,
   .volume-slider-group {
-    height: 38px;
+    height: 42px;
   }
 
   .vertical-sliders-1 {
-    gap: 10px;
-    margin-top: 6px;
+    gap: 11px;
+    margin-top: 8px;
   }
 
   /* Button rows */
@@ -1726,12 +1726,12 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   .steps-group,
   .grid-scale-row,
   .load-save-group {
-    height: 40px;
-    gap: 6px;
+    height: 44px;
+    gap: 7px;
   }
 
   .eraser-container {
-    margin-top: 6px;
+    margin-top: 8px;
   }
 
   /* All square icon buttons */
@@ -1744,8 +1744,8 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   .save-button,
   .load-button,
   .scale-button {
-    width: 36px !important;
-    height: 36px !important;
+    width: 40px !important;
+    height: 40px !important;
   }
 
   /* Slider thumbs */
@@ -1753,16 +1753,16 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   .slider-group input[type="range"]::-webkit-slider-thumb,
   .grid-slider-group input[type="range"]::-webkit-slider-thumb,
   .volume-slider-group input[type="range"]::-webkit-slider-thumb {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 
   .brush-size-group input[type="range"]::-moz-range-thumb,
   .slider-group input[type="range"]::-moz-range-thumb,
   .grid-slider-group input[type="range"]::-moz-range-thumb,
   .volume-slider-group input[type="range"]::-moz-range-thumb {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 }
 

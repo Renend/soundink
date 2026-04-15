@@ -2395,14 +2395,14 @@ const CanvasComponent = () => {
               <img src={instrumentIcons[colorInstrumentMap[slot]]} alt={colorInstrumentMap[slot]} className="phone-color-icon" />
             </button>
           ))}
-        </div>
 
-        <button
-          className="phone-gear-btn"
-          onClick={() => openInstrumentMenu(currentColor)}
-        >
-          <img src={GearIcon} alt="Edit" className="iconGear" />
-        </button>
+          <button
+            className="phone-gear-btn"
+            onClick={() => openInstrumentMenu(currentColor)}
+          >
+            <img src={GearIcon} alt="Edit" className="iconGear" />
+          </button>
+        </div>
 
         <button
           className={`phone-play-btn ${isPlaying ? 'stop-mode' : 'play-mode'}`}

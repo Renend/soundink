@@ -39,6 +39,7 @@ const CanvasComponent = () => {
   const [isDownloading, setIsDownloading] = useState(false); // State for downloading files
   const [isClearScreenPopupVisible, setIsClearScreenPopupVisible] = useState(false);
   const [isSavePopupVisible, setIsSavePopupVisible] = useState(false);
+  const [isPhoneMenuOpen, setIsPhoneMenuOpen] = useState(false);
   const svgRef = useRef();
   let loadInputRef = null; // Create a ref for the hidden input element
   const clearScreenPopupRef = useRef(null);
@@ -2294,6 +2295,126 @@ const CanvasComponent = () => {
       {isSavePopupVisible && (
         <SavePopup onSave={handleSave} onCancel={cancelSaveDrawing} />
       )}
+
+      {/* Phone UI: hidden on desktop/tablet via CSS media query */}
+
+      {/* Slide-up drawer */}
+      {isPhoneMenuOpen && (
+        <div className="phone-drawer-overlay" onClick={() => setIsPhoneMenuOpen(false)}>
+          <div className="phone-drawer" onClick={e => e.stopPropagation()}>
+            <div className="phone-drawer-pill" />
+
+            <div className="phone-drawer-sliders">
+              <div className="brush-size-group">
+                <input type="range" min="1" max="50" step="1" value={currentSize}
+                  onChange={e => setCurrentSize(Number(e.target.value))} />
+              </div>
+              <div className="volume-slider-group">
+                <input type="range" min="0" max="1" step="0.01" value={volume}
+                  onChange={e => { const v = parseFloat(e.target.value); setVolume(v); setMasterVolume(v); }} />
+              </div>
+              <div className="slider-group">
+                <input type="range" min="60" max="400" step="5" value={bpm}
+                  onChange={e => { const b = Number(e.target.value); setBpm(b); setPlaybackSpeed(Math.round(60000 / b)); }} />
+              </div>
+              <div className="grid-slider-group">
+                <input type="range" min="0" max={gridConfigurations.length - 1} step="1"
+                  value={gridIndex} onChange={handleGridChange} />
+              </div>
+            </div>
+
+            <div className="phone-drawer-buttons">
+              <button
+                className={`edit-button ${isEditMode ? 'active' : ''}`}
+                onClick={() => {
+                  setIsEditMode(prev => {
+                    const next = !prev;
+                    if (next) {
+                      previousToolStateRef.current = { currentColor, isTrash, isEraser };
+                      setIsTrash(false); setIsEraser(false); setSelectedLine(null);
+                    } else {
+                      setCurrentColor(previousToolStateRef.current.currentColor);
+                      setIsTrash(previousToolStateRef.current.isTrash);
+                      setIsEraser(previousToolStateRef.current.isEraser);
+                      exitEditMode();
+                    }
+                    return next;
+                  });
+                  setIsPhoneMenuOpen(false);
+                }}
+              >
+                <img src={EditIcon} alt="Edit" className="iconEdit" />
+              </button>
+
+              <button
+                className={`trash-button ${!isEditMode && isTrash ? 'active' : ''}`}
+                onClick={() => {
+                  if (isEditMode) exitEditMode();
+                  if (isTrash) { setCurrentColor(previousColor); setIsEraser(false); }
+                  else { setPreviousColor(currentColor); setCurrentColor('eraser'); setIsEraser(false); }
+                  setIsTrash(!isTrash);
+                  setIsPhoneMenuOpen(false);
+                }}
+              >
+                <img src={TrashIcon} alt="Trash" className="iconTrash" />
+              </button>
+
+              <button className="grid-button" onClick={() => { toggleGrid(); setIsPhoneMenuOpen(false); }}>
+                <img src={GridIcon} alt="Grid" className="iconGrid" />
+              </button>
+
+              <button className="scale-button" onClick={() => { setIsScaleMenuOpen(true); setIsPhoneMenuOpen(false); }}>
+                <img src={scaleIcons[currentScale]} alt={currentScale} className="scale-icon" />
+              </button>
+
+              <button className="save-button" onClick={() => { handleSaveDrawing(); setIsPhoneMenuOpen(false); }}>
+                <img src={downloadIcon} alt="Save" className="iconDown" />
+              </button>
+
+              <button className="load-button" onClick={() => { loadInputRef.click(); setIsPhoneMenuOpen(false); }}>
+                <img src={uploadIcon} alt="Load" className="iconUp" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom bar */}
+      <div className="phone-bottom-bar">
+        <div className="phone-color-strip">
+          {Object.keys(colorInstrumentMap).map((slot, index) => (
+            <button
+              key={index}
+              className={`phone-color-dot ${!isEditMode && currentColor === slot ? 'active' : ''}`}
+              style={{ border: `7px solid ${colorSlots[slot]}` }}
+              onMouseDown={() => handleMouseDown(slot)}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onClick={() => { exitEditMode(); setCurrentColor(slot); setIsEraser(false); setIsTrash(false); }}
+            >
+              <img src={instrumentIcons[colorInstrumentMap[slot]]} alt={colorInstrumentMap[slot]} className="phone-color-icon" />
+            </button>
+          ))}
+        </div>
+
+        <button
+          className={`phone-play-btn ${isPlaying ? 'stop-mode' : 'play-mode'}`}
+          onClick={() => { if (isPlaying) { playbackStopped.current = true; } else { handlePlay(); } }}
+        >
+          <img src={isPlaying ? StopIcon : PlayIcon} alt={isPlaying ? 'Stop' : 'Play'} className={isPlaying ? 'iconStop' : 'iconPlay'} />
+        </button>
+
+        <button className="undo phone-action-btn" onClick={handleUndo}>
+          <img src={UndoIcon} alt="Undo" className="iconDo" />
+        </button>
+        <button className="redo phone-action-btn" onClick={handleRedo}>
+          <img src={RedoIcon} alt="Redo" className="iconDo" />
+        </button>
+
+        <button className="phone-menu-btn" onClick={() => setIsPhoneMenuOpen(o => !o)}>
+          <span className="phone-menu-icon">☰</span>
+        </button>
+      </div>
 
     </div>
   );

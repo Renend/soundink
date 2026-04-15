@@ -1766,3 +1766,225 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 }
 
+/* ============================================================
+   Phone UI
+   Hidden by default; activated on phones (portrait ≤500px wide,
+   or landscape ≤450px tall). Replaces the left sidebar entirely.
+   ============================================================ */
+
+/* Hidden on desktop/tablet */
+.phone-bottom-bar,
+.phone-drawer-overlay {
+  display: none;
+}
+
+@media (max-width: 500px), (orientation: landscape) and (max-height: 450px) {
+
+  /* Hide the desktop sidebar */
+  .controls-container {
+    display: none !important;
+  }
+
+  /* Push canvas up so the bottom bar doesn't cover drawings */
+  .canvas-container {
+    padding-bottom: 68px;
+  }
+
+  /* ── Bottom bar ── */
+  .phone-bottom-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    padding: 8px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--sideBarColor);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.18);
+    z-index: 400;
+    box-sizing: border-box;
+  }
+
+  /* Color dot strip — takes all remaining space */
+  .phone-color-strip {
+    display: flex;
+    flex: 1;
+    gap: 5px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .phone-color-dot {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    max-width: 48px;
+    border-radius: 28%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    flex-shrink: 1;
+    padding: 0;
+  }
+
+  .phone-color-dot.active {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.4);
+  }
+
+  .phone-color-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    transform: none;
+    filter: none;
+  }
+
+  /* Play/Stop */
+  .phone-play-btn {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    border-radius: 25%;
+    background: var(--buttonColor);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+    padding: 0;
+  }
+
+  .phone-play-btn.stop-mode {
+    background: #d44f5e !important;
+  }
+
+  .phone-play-btn:active { transform: scale(0.94); }
+
+  /* Undo / Redo */
+  .phone-action-btn {
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0;
+  }
+
+  /* Hamburger menu button */
+  .phone-menu-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    padding: 0;
+  }
+
+  .phone-menu-btn:active { background: rgba(255, 255, 255, 0.35); }
+
+  .phone-menu-icon {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--buttonColor);
+  }
+
+  /* ── Slide-up drawer ── */
+  .phone-drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 500;
+  }
+
+  .phone-drawer {
+    position: absolute;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    background: var(--sideBarColor);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Drag-handle pill */
+  .phone-drawer-pill {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 2px;
+    align-self: center;
+    margin-bottom: 2px;
+  }
+
+  /* Sliders inside drawer */
+  .phone-drawer-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .phone-drawer-sliders .brush-size-group,
+  .phone-drawer-sliders .volume-slider-group,
+  .phone-drawer-sliders .slider-group,
+  .phone-drawer-sliders .grid-slider-group {
+    height: 44px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .phone-drawer-sliders input[type="range"] {
+    width: 100% !important;
+  }
+
+  /* Button row inside drawer */
+  .phone-drawer-buttons {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .phone-drawer-buttons button {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 25%;
+    background: var(--buttonColor);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .phone-drawer-buttons button.active {
+    box-shadow:
+      0 0 0 3px var(--buttonColor),
+      0 0 8px var(--shadowColor);
+  }
+
+  .phone-drawer-buttons button:active { transform: scale(0.93); }
+
+  .phone-drawer-buttons img {
+    width: 55%;
+    height: 55%;
+    object-fit: contain;
+    transform: none;
+    filter: none;
+  }
+}

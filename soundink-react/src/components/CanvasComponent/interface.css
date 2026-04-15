@@ -2020,12 +2020,20 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   /* ── Color+instrument picker modal ── */
   .combined-selection-modal {
     flex-direction: column;
-    max-width: calc(100vw - 24px);
-    width: calc(100vw - 24px);
-    padding: 20px 16px 16px;
-    gap: 14px;
-    max-height: 82dvh;
+    max-width: calc(100vw - 32px);
+    width: calc(100vw - 32px);
+    /* Extra top padding so content clears the close button */
+    padding: 48px 14px 16px;
+    gap: 12px;
+    max-height: 76dvh;
     overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Reposition close button inside modal bounds so overflow-y:auto doesn't clip it */
+  .close-modal-button {
+    top: 8px;
+    right: 8px;
   }
 
   .color-options {
@@ -2042,9 +2050,12 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     gap: 8px;
   }
 
+  /* Stack button above label so image isn't squeezed sideways */
   .instrument-option-cell {
     width: 70px;
+    flex-direction: column;
     align-items: center;
+    gap: 4px;
   }
 
   .instrument-option-button {
@@ -2174,5 +2185,24 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   .volume-slider-group input[type="range"]::-moz-range-thumb {
     width: 30px;
     height: 30px;
+  }
+
+  /* ── Modal fixes for landscape phone ── */
+  .combined-selection-modal {
+    max-height: 80dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 48px;
+  }
+
+  .close-modal-button {
+    top: 8px;
+    right: 8px;
+  }
+
+  .instrument-option-cell {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
 }

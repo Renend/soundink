@@ -730,7 +730,7 @@ const CanvasComponent = () => {
     if (isEditMode) {
       root.style.setProperty('--canvasColor', '#b7aea2'); // Light gray for Edit Mode
     } else {
-      root.style.setProperty('--canvasColor', '#eae6e1'); // Default canvas color
+      root.style.setProperty('--canvasColor', '#ffffff'); // Default canvas color
     }
   }, [isEditMode]);
 

@@ -1665,13 +1665,12 @@ button:hover .instrument-sidebar-icon {
 }
 
 /*
-
-Small iPad landscape (iPadOS 15, ~1024×768)
-Targets landscape orientation with max 768px viewport height.
+Small iPad landscape (iPadOS 15, ~1024×768 or ~1080×810)
+Targets landscape orientation with max 820px viewport height.
+Covers both Safari-UI-visible (~700px) and Safari fullscreen (~810px) on 9.7"/10.2" iPads.
 Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
-
 */
-@media (orientation: landscape) and (max-height: 768px) {
+@media (orientation: landscape) and (max-height: 820px) {
 
   .controls-scaler {
     gap: 7px;
@@ -1680,8 +1679,8 @@ Doesn't affect: portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
 
   /* Play button */
   .play-stop-button {
-    width: 64px !important;
-    height: 64px !important;
+    width: 68px !important;
+    height: 68px !important;
   }
 
   .play-group {

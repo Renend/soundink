@@ -1766,11 +1766,12 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 }
 
-/* ============================================================
-   Phone UI
-   Hidden by default; activated on phones (portrait ≤500px wide,
-   or landscape ≤450px tall). Replaces the left sidebar entirely.
-   ============================================================ */
+/*
+Phone UI: hidden by default, activated on phones.
+Portrait: max-width 500px.
+Landscape: aspect-ratio > 1.6 (phones ~2:1) AND max-height 500px.
+This reliably excludes iPads (aspect-ratio ~4:3 = 1.33).
+*/
 
 /* Hidden on desktop/tablet */
 .phone-bottom-bar,
@@ -1778,7 +1779,7 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   display: none;
 }
 
-@media (max-width: 500px), (orientation: landscape) and (max-height: 450px) {
+@media (max-width: 500px), (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
   /* Hide the desktop sidebar */
   .controls-container {
@@ -1899,6 +1900,30 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     color: var(--buttonColor);
   }
 
+  /* Gear button — opens color+instrument picker for current slot */
+  .phone-gear-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    padding: 0;
+  }
+
+  .phone-gear-btn:active { background: rgba(255, 255, 255, 0.35); }
+
+  .phone-gear-btn .iconGear {
+    width: 55%;
+    height: 55%;
+    filter: brightness(0) invert(1);
+  }
+
   /* ── Slide-up drawer ── */
   .phone-drawer-overlay {
     display: block;
@@ -1986,5 +2011,40 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     object-fit: contain;
     transform: none;
     filter: none;
+  }
+
+  /* ── Color+instrument picker modal — compact on phone ── */
+  .combined-selection-modal {
+    flex-direction: column;
+    max-width: calc(100vw - 24px);
+    width: calc(100vw - 24px);
+    padding: 20px 16px 16px;
+    gap: 14px;
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+
+  .color-options {
+    width: 100%;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .instrument-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: unset;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .instrument-option-cell {
+    width: 70px;
+    align-items: center;
+  }
+
+  .instrument-option-button {
+    width: 50px !important;
+    height: 50px !important;
   }
 }

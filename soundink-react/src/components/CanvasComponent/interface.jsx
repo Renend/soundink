@@ -2398,6 +2398,13 @@ const CanvasComponent = () => {
         </div>
 
         <button
+          className="phone-gear-btn"
+          onClick={() => openInstrumentMenu(currentColor)}
+        >
+          <img src={GearIcon} alt="Edit" className="iconGear" />
+        </button>
+
+        <button
           className={`phone-play-btn ${isPlaying ? 'stop-mode' : 'play-mode'}`}
           onClick={() => { if (isPlaying) { playbackStopped.current = true; } else { handlePlay(); } }}
         >

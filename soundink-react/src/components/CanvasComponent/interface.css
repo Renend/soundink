@@ -2090,7 +2090,9 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 */
 @media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
-  .main-container {
+  /* Lock scrolling */
+  html, body, .main-container {
+    overflow: hidden !important;
     height: 100dvh;
   }
 
@@ -2105,6 +2107,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     padding-bottom: 0 !important;
     padding-left: 68px;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   /* Reorient the bottom bar into a left sidebar */
@@ -2112,7 +2115,8 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     display: flex !important;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: space-between;
+    gap: 0;
     position: fixed;
     left: 0;
     top: 0;
@@ -2125,10 +2129,12 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);
     z-index: 400;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
-  /* Color strip becomes a vertical column */
+  /* Color strip: fixed-size dots, no stretching */
   .phone-color-strip {
+    display: flex;
     flex-direction: column;
     flex: 1;
     gap: 5px;
@@ -2136,42 +2142,42 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     min-height: 0;
     width: 100%;
     align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
   }
 
-  /* Color dots fill the strip height instead of width */
+  /* Color dots: fixed size, never stretch */
   .phone-color-dot {
-    flex: 1;
-    min-height: 0;
-    max-height: 48px;
-    max-width: unset;
+    flex: 0 0 40px;
     width: 44px;
-    height: auto;
+    height: 40px;
+    max-width: unset;
+    max-height: unset;
   }
 
   /* Gear button: remove portrait-only left margin */
   .phone-gear-btn {
+    flex-shrink: 0;
     margin-left: 0;
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
-  /* Play button */
+  /* Bottom group: play + undo/redo + menu */
   .phone-play-btn {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
   }
 
-  /* Undo/redo */
   .phone-action-btn {
-    width: 36px !important;
-    height: 36px !important;
+    width: 34px !important;
+    height: 34px !important;
     flex-shrink: 0;
   }
 
-  /* Menu button */
   .phone-menu-btn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     flex-shrink: 0;
   }
 

@@ -1959,30 +1959,18 @@ Portrait Phone: bottom bar layout
   .phone-drawer-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
-    margin-bottom: 2px;
-  }
-
-  .phone-drawer-pill {
-    width: 40px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.45);
-    border-radius: 2px;
+    justify-content: flex-end;
+    margin-bottom: 4px;
   }
 
   .phone-drawer-close {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 28px;
-    height: 28px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 50%;
     color: white;
-    font-size: 20px;
+    font-size: 24px;
     line-height: 1;
     display: flex;
     align-items: center;
@@ -1992,7 +1980,7 @@ Portrait Phone: bottom bar layout
   }
 
   .phone-drawer-close:active {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.5);
   }
 
   .phone-drawer-sliders {

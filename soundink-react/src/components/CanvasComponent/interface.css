@@ -2116,11 +2116,14 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     position: fixed;
     left: 0;
     top: 0;
-    bottom: 0;
+    bottom: auto;
     right: auto;
     width: 68px;
     height: 100dvh;
-    padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 8px 10px;
+    background: var(--sideBarColor);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);
+    z-index: 400;
     box-sizing: border-box;
   }
 
@@ -2145,13 +2148,13 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     height: auto;
   }
 
-  /* Gear button: remove portrait-only margin */
+  /* Gear button: remove portrait-only left margin */
   .phone-gear-btn {
     margin-left: 0;
     margin-top: 2px;
   }
 
-  /* Play button size stays consistent */
+  /* Play button */
   .phone-play-btn {
     width: 46px;
     height: 46px;
@@ -2162,12 +2165,14 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   .phone-action-btn {
     width: 36px !important;
     height: 36px !important;
+    flex-shrink: 0;
   }
 
   /* Menu button */
   .phone-menu-btn {
     width: 36px;
     height: 36px;
+    flex-shrink: 0;
   }
 
   /* Drawer: slides up from bottom, clears the left bar */

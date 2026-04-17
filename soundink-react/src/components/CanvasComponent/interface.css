@@ -2090,10 +2090,20 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 */
 @media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
-  /* Lock scrolling */
-  html, body, .main-container {
+  /* Lock scrolling — position:fixed on body is the reliable iOS Safari trick */
+  html, body {
+    position: fixed;
+    overflow: hidden !important;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  .main-container {
     overflow: hidden !important;
     height: 100dvh;
+    touch-action: none;
   }
 
   /* Hide the desktop sidebar */
@@ -2105,26 +2115,26 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   .canvas-container {
     height: 100dvh;
     padding-bottom: 0 !important;
-    padding-left: 68px;
+    padding-left: 80px;
     box-sizing: border-box;
     overflow: hidden;
   }
 
-  /* Reorient the bottom bar into a left sidebar */
+  /* Reorient the bottom bar into a left sidebar — 80px wide */
   .phone-bottom-bar {
     display: flex !important;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 0;
+    justify-content: flex-start;
+    gap: 6px;
     position: fixed;
     left: 0;
     top: 0;
     bottom: auto;
     right: auto;
-    width: 68px;
+    width: 80px;
     height: 100dvh;
-    padding: 10px 8px 10px;
+    padding: 12px 8px 12px;
     background: var(--sideBarColor);
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);
     z-index: 400;
@@ -2132,7 +2142,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     overflow: hidden;
   }
 
-  /* Color strip: fixed-size dots, no stretching */
+  /* Color strip: dots flex to fill available space, gear is now a sibling */
   .phone-color-strip {
     display: flex;
     flex-direction: column;
@@ -2143,41 +2153,71 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     width: 100%;
     align-items: center;
     justify-content: flex-start;
-    overflow: hidden;
   }
 
-  /* Color dots: fixed size, never stretch */
+  /* Dots grow to fill strip height, capped at 52px */
   .phone-color-dot {
-    flex: 0 0 40px;
-    width: 44px;
-    height: 40px;
+    flex: 1;
+    min-height: 0;
+    max-height: 52px;
+    width: 52px;
     max-width: unset;
-    max-height: unset;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* Gear button: remove portrait-only left margin */
+  /* Icons: block display kills inline baseline gap that pushes them down */
+  .phone-color-icon {
+    display: block;
+    width: 55%;
+    height: 55%;
+    object-fit: contain;
+    transform: none;
+    filter: none;
+  }
+
+  /* Gear button: now a direct bar item, always visible */
   .phone-gear-btn {
-    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
     margin-left: 0;
-    margin-top: 4px;
+    flex-shrink: 0;
   }
 
-  /* Bottom group: play + undo/redo + menu */
+  .phone-gear-btn .iconGear {
+    width: 55%;
+    height: 55%;
+    filter: brightness(0) invert(1);
+  }
+
+  /* Play button */
   .phone-play-btn {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     flex-shrink: 0;
   }
 
+  /* Undo/redo */
   .phone-action-btn {
-    width: 34px !important;
-    height: 34px !important;
+    width: 40px !important;
+    height: 40px !important;
     flex-shrink: 0;
   }
 
+  /* Menu button */
   .phone-menu-btn {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
   }
 
@@ -2195,7 +2235,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   .phone-drawer {
     position: absolute;
     bottom: 0;
-    left: 68px;
+    left: 80px;
     right: 0;
     background: var(--sideBarColor);
     border-radius: 20px 20px 0 0;

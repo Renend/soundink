@@ -2082,8 +2082,8 @@ Portrait Phone: bottom bar layout
   }
 }
 
-/* 
-Landscape Phone: sidebar layout (mirrors desktop/iPad, scaled)
+/*
+Landscape Phone: reuse the portrait bottom bar as a left sidebar.
 Phones in landscape have aspect-ratio ~2:1 (>1.6).
 iPads in landscape are ~4:3 (1.33) — excluded.
 dvh adjusts automatically when Safari URL bar shows/hides.
@@ -2094,121 +2094,91 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     height: 100dvh;
   }
 
-  /* Show sidebar — override any portrait-phone rule if both somehow match */
+  /* Hide the desktop sidebar */
   .controls-container {
-    display: flex !important;
-    height: 100dvh;
-    min-height: 100dvh;
-    /* Scale sidebar to fit the short landscape viewport dynamically.
-       Reference 810px is the reduced content height after the size overrides below.
-       dvh means the zoom reacts live to Safari's UI appearing/disappearing. */
-    zoom: clamp(0.36, calc(100dvh / 810px), 0.54);
-  }
-
-  /* Hide the bottom bar in landscape */
-  .phone-bottom-bar {
     display: none !important;
   }
 
-  /* Canvas fills the rest; no bottom padding needed */
+  /* Canvas fills the rest; left padding for the left bar */
   .canvas-container {
     height: 100dvh;
     padding-bottom: 0 !important;
+    padding-left: 68px;
+    box-sizing: border-box;
   }
 
-  /* Compact sidebar sizes for phone landscape
-  These stack on top of the iPad-small query
-  (orientation:landscape + max-height:820px) which already fires here,
-  further reducing everything to fit in ~810px virtual height. 
-  */
-  .controls-scaler {
+  /* Reorient the bottom bar into a left sidebar */
+  .phone-bottom-bar {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: 68px;
+    height: 100dvh;
+    padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  /* Color strip becomes a vertical column */
+  .phone-color-strip {
+    flex-direction: column;
+    flex: 1;
     gap: 5px;
-    padding: 8px 10px;
+    min-width: unset;
+    min-height: 0;
+    width: 100%;
+    align-items: center;
   }
 
-  .play-stop-button {
-    width: 60px !important;
-    height: 60px !important;
+  /* Color dots fill the strip height instead of width */
+  .phone-color-dot {
+    flex: 1;
+    min-height: 0;
+    max-height: 48px;
+    max-width: unset;
+    width: 44px;
+    height: auto;
   }
 
-  .play-group {
-    margin-bottom: 5px;
+  /* Gear button: remove portrait-only margin */
+  .phone-gear-btn {
+    margin-left: 0;
+    margin-top: 2px;
   }
 
-  .color-button {
-    width: 52px !important;
-    height: 52px !important;
+  /* Play button size stays consistent */
+  .phone-play-btn {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
   }
 
-  .color-group {
-    gap: 8px;
+  /* Undo/redo */
+  .phone-action-btn {
+    width: 36px !important;
+    height: 36px !important;
   }
 
-  .instrument-connector {
-    height: 18px;
-  }
-
-  .instrument-select-button {
-    width: 20px !important;
-    height: 20px !important;
-  }
-
-  .brush-size-group,
-  .slider-group,
-  .grid-slider-group,
-  .volume-slider-group {
-    height: 34px;
-  }
-
-  .vertical-sliders-1 {
-    gap: 5px;
-    margin-top: 4px;
-  }
-
-  .eraser-container,
-  .steps-group,
-  .grid-scale-row,
-  .load-save-group {
+  /* Menu button */
+  .phone-menu-btn {
+    width: 36px;
     height: 36px;
-    gap: 5px;
   }
 
-  .eraser-container {
-    margin-top: 4px;
+  /* Drawer: slides up from bottom, clears the left bar */
+  .phone-drawer {
+    bottom: 0;
+    left: 68px;
   }
 
-  .eraser-button,
-  .trash-button,
-  .undo,
-  .redo,
-  .grid-button,
-  .edit-button,
-  .save-button,
-  .load-button,
-  .scale-button {
-    width: 32px !important;
-    height: 32px !important;
-  }
-
-  .brush-size-group input[type="range"]::-webkit-slider-thumb,
-  .slider-group input[type="range"]::-webkit-slider-thumb,
-  .grid-slider-group input[type="range"]::-webkit-slider-thumb,
-  .volume-slider-group input[type="range"]::-webkit-slider-thumb {
-    width: 30px;
-    height: 30px;
-  }
-
-  .brush-size-group input[type="range"]::-moz-range-thumb,
-  .slider-group input[type="range"]::-moz-range-thumb,
-  .grid-slider-group input[type="range"]::-moz-range-thumb,
-  .volume-slider-group input[type="range"]::-moz-range-thumb {
-    width: 30px;
-    height: 30px;
-  }
-
-  /* Modal fixes for landscape phone */
+  /* Modal: account for left bar offset */
   .combined-selection-modal {
-    max-height: 80dvh;
+    max-height: 90dvh;
     overflow-y: auto;
     overflow-x: hidden;
     padding-top: 48px;

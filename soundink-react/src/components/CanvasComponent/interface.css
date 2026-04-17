@@ -2181,10 +2181,65 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     flex-shrink: 0;
   }
 
-  /* Drawer: slides up from bottom, clears the left bar */
+  /* Drawer overlay: portrait sets this display:block inside max-width:500px,
+     so we must re-declare it here for landscape to work */
+  .phone-drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 500;
+  }
+
+  /* Drawer: full styles needed since portrait query doesn't fire in landscape */
   .phone-drawer {
+    position: absolute;
     bottom: 0;
     left: 68px;
+    right: 0;
+    background: var(--sideBarColor);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Gear button: portrait-only styles don't apply in landscape */
+  .phone-gear-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  .phone-gear-btn .iconGear {
+    width: 55%;
+    height: 55%;
+    filter: brightness(0) invert(1);
+  }
+
+  /* Color dot icons: portrait-only rule doesn't fire in landscape */
+  .phone-color-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    transform: none;
+    filter: none;
+  }
+
+  /* Color dots: border-radius is portrait-only too */
+  .phone-color-dot {
+    border-radius: 28%;
   }
 
   /* Modal: account for left bar offset */

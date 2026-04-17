@@ -1781,9 +1781,9 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   display: none;
 }
 
-/* ================================================================
-   PORTRAIT PHONE — bottom bar layout
-   ================================================================ */
+/* 
+Portrait Phone: bottom bar layout
+*/
 @media (max-width: 500px) {
 
   .main-container {
@@ -2042,17 +2042,18 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 
   .instrument-options {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     min-width: unset;
     width: 100%;
     gap: 8px;
+    justify-items: center;
   }
 
   /* Stack button above label so image isn't squeezed sideways */
   .instrument-option-cell {
-    width: 70px;
+    width: 100%;
+    max-width: 80px;
     flex-direction: column;
     align-items: center;
     gap: 4px;
@@ -2064,12 +2065,12 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
   }
 }
 
-/* ================================================================
-   LANDSCAPE PHONE — sidebar layout (mirrors desktop/iPad, scaled)
-   Phones in landscape have aspect-ratio ~2:1 (>1.6).
-   iPads in landscape are ~4:3 (1.33) — excluded.
-   dvh adjusts automatically when Safari URL bar shows/hides.
-   ================================================================ */
+/* 
+Landscape Phone: sidebar layout (mirrors desktop/iPad, scaled)
+Phones in landscape have aspect-ratio ~2:1 (>1.6).
+iPads in landscape are ~4:3 (1.33) — excluded.
+dvh adjusts automatically when Safari URL bar shows/hides.
+*/
 @media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
   .main-container {
@@ -2098,10 +2099,11 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     padding-bottom: 0 !important;
   }
 
-  /* ── Compact sidebar sizes for phone landscape ──
-     These stack on top of the iPad-small query
-     (orientation:landscape + max-height:820px) which already fires here,
-     further reducing everything to fit in ~810px virtual height. */
+  /* Compact sidebar sizes for phone landscape
+  These stack on top of the iPad-small query
+  (orientation:landscape + max-height:820px) which already fires here,
+  further reducing everything to fit in ~810px virtual height. 
+  */
   .controls-scaler {
     gap: 5px;
     padding: 8px 10px;
@@ -2187,7 +2189,7 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     height: 30px;
   }
 
-  /* ── Modal fixes for landscape phone ── */
+  /* Modal fixes for landscape phone */
   .combined-selection-modal {
     max-height: 80dvh;
     overflow-y: auto;

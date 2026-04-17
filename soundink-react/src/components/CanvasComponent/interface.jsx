@@ -2302,7 +2302,10 @@ const CanvasComponent = () => {
       {isPhoneMenuOpen && (
         <div className="phone-drawer-overlay" onClick={() => setIsPhoneMenuOpen(false)}>
           <div className="phone-drawer" onClick={e => e.stopPropagation()}>
-            <div className="phone-drawer-pill" onClick={() => setIsPhoneMenuOpen(false)} />
+            <div className="phone-drawer-header">
+              <div className="phone-drawer-pill" />
+              <button className="phone-drawer-close" onClick={() => setIsPhoneMenuOpen(false)}>×</button>
+            </div>
 
             <div className="phone-drawer-sliders">
               <div className="brush-size-group">

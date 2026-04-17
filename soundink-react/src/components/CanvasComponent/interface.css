@@ -2043,17 +2043,15 @@ Portrait Phone: bottom bar layout
 
   .instrument-options {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
     min-width: unset;
     width: 100%;
-    gap: 8px;
-    justify-items: center;
+    gap: 16px 20px;
   }
 
   /* Stack button above label so image isn't squeezed sideways */
   .instrument-option-cell {
-    width: 100%;
-    max-width: 80px;
     flex-direction: column;
     align-items: center;
     gap: 4px;

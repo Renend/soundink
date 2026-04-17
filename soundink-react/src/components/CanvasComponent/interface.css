@@ -1963,6 +1963,9 @@ Portrait Phone: bottom bar layout
     border-radius: 2px;
     align-self: center;
     margin-bottom: 2px;
+    cursor: pointer;
+    padding: 8px 20px;
+    box-sizing: content-box;
   }
 
   .phone-drawer-sliders {
@@ -2022,15 +2025,13 @@ Portrait Phone: bottom bar layout
     flex-direction: column;
     max-width: calc(100vw - 32px);
     width: calc(100vw - 32px);
-    /* Extra top padding so content clears the close button */
-    padding: 48px 14px 16px;
-    gap: 12px;
-    max-height: 76dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    padding: 36px 14px 12px;
+    gap: 8px;
+    max-height: 90dvh;
+    overflow: hidden;
   }
 
-  /* Reposition close button inside modal bounds so overflow-y:auto doesn't clip it */
+  /* Reposition close button inside modal bounds */
   .close-modal-button {
     top: 8px;
     right: 8px;
@@ -2039,6 +2040,12 @@ Portrait Phone: bottom bar layout
   .color-options {
     width: 100%;
     grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .color-option {
+    width: 42px;
+    height: 42px;
   }
 
   .instrument-options {
@@ -2047,19 +2054,20 @@ Portrait Phone: bottom bar layout
     justify-content: center;
     min-width: unset;
     width: 100%;
-    gap: 16px 20px;
+    gap: 12px 20px;
+    margin-top: 8px;
   }
 
   /* Stack button above label so image isn't squeezed sideways */
   .instrument-option-cell {
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
 
   .instrument-option-button {
-    width: 50px !important;
-    height: 50px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
 }
 

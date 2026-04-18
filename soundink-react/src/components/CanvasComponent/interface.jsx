@@ -903,21 +903,44 @@ const CanvasComponent = () => {
       // When rotating into landscape phone mode, the body may have a scroll offset
       // from portrait scrolling. That offset makes iOS touch coordinates wrong for
       // fixed-position buttons. Reset it immediately.
-      const isLandscapePhone =
-        window.innerWidth > window.innerHeight &&
-        window.innerWidth / window.innerHeight >= 1.6 &&
-        window.innerHeight <= 500;
-      if (isLandscapePhone) {
-        // Sync JS scroll lock with the CSS position:fixed on body.
-        // This handles the brief transition frame before the media query fires.
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
+      // iOS fires resize before innerHeight updates; double-RAF waits for layout.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const w = window.innerWidth, h = window.innerHeight;
+        const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
+        const bar = document.querySelector('.phone-bottom-bar');
+        if (isLandscapePhone) {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          // dvh can lag on iOS during rotation — force exact height via JS so
+          // bottom buttons are never pushed off-screen by a stale dvh value.
+          if (bar) bar.style.height = h + 'px';
+        } else {
+          if (bar) bar.style.height = '';
+        }
+      }));
     };
-    window.addEventListener('resize', resizeListener);
+    const fixBarHeight = () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const w = window.innerWidth, h = window.innerHeight;
+        const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
+        const bar = document.querySelector('.phone-bottom-bar');
+        if (isLandscapePhone) {
+          window.scrollTo(0, 0);
+          if (bar) bar.style.height = h + 'px';
+        } else {
+          if (bar) bar.style.height = '';
+        }
+      }));
+    };
 
-    return () => window.removeEventListener('resize', resizeListener);
+    window.addEventListener('resize', resizeListener);
+    window.addEventListener('orientationchange', fixBarHeight);
+
+    return () => {
+      window.removeEventListener('resize', resizeListener);
+      window.removeEventListener('orientationchange', fixBarHeight);
+    };
   }, [lines, gridConfig]);
 
   // Handles the slider input for changing playback speed

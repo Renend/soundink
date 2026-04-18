@@ -2090,10 +2090,16 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 */
 @media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
-  /* Lock scrolling: overflow:hidden + overscroll-behavior:none.
-     Removed position:fixed — it causes touch coordinate offsets on iOS for fixed children.
+  /* Lock scrolling on iOS: position:fixed on body is the only reliable way to prevent
+     iOS momentum scroll from creating a non-zero scroll offset. A non-zero offset makes
+     touch event coordinates wrong for position:fixed sidebar buttons.
      Do NOT set touch-action:none — it blocks button taps. */
   html, body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow: hidden !important;
     width: 100%;
     height: 100%;

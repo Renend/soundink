@@ -908,9 +908,8 @@ const CanvasComponent = () => {
         window.innerWidth / window.innerHeight >= 1.6 &&
         window.innerHeight <= 500;
       if (isLandscapePhone) {
-        // Reset any portrait scroll offset so iOS touch coordinates stay accurate.
-        document.body.style.top = '';
-        document.body.style.position = '';
+        // Sync JS scroll lock with the CSS position:fixed on body.
+        // This handles the brief transition frame before the media query fires.
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;

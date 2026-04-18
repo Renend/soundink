@@ -898,7 +898,24 @@ const CanvasComponent = () => {
   };
 
   useEffect(() => {
-    const resizeListener = () => handleResize();
+    const resizeListener = () => {
+      handleResize();
+      // When rotating into landscape phone mode, the body may have a scroll offset
+      // from portrait scrolling. That offset makes iOS touch coordinates wrong for
+      // fixed-position buttons. Reset it immediately.
+      const isLandscapePhone =
+        window.innerWidth > window.innerHeight &&
+        window.innerWidth / window.innerHeight >= 1.6 &&
+        window.innerHeight <= 500;
+      if (isLandscapePhone) {
+        // Reset any portrait scroll offset so iOS touch coordinates stay accurate.
+        document.body.style.top = '';
+        document.body.style.position = '';
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+    };
     window.addEventListener('resize', resizeListener);
 
     return () => window.removeEventListener('resize', resizeListener);

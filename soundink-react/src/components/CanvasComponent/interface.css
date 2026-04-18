@@ -2090,20 +2090,19 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 */
 @media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
 
-  /* Lock scrolling — position:fixed on body is the reliable iOS Safari trick */
+  /* Lock scrolling — position:fixed on body is the reliable iOS Safari trick.
+     Do NOT set touch-action:none — it blocks button taps. */
   html, body {
     position: fixed;
     overflow: hidden !important;
     width: 100%;
     height: 100%;
     overscroll-behavior: none;
-    touch-action: none;
   }
 
   .main-container {
     overflow: hidden !important;
     height: 100dvh;
-    touch-action: none;
   }
 
   /* Hide the desktop sidebar */
@@ -2134,7 +2133,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     right: auto;
     width: 80px;
     height: 100dvh;
-    padding: 12px 8px 12px;
+    padding: 12px 8px calc(12px + env(safe-area-inset-bottom, 0px));
     background: var(--sideBarColor);
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);
     z-index: 400;
@@ -2152,20 +2151,26 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     min-height: 0;
     width: 100%;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-evenly;
   }
 
-  /* Dots grow to fill strip height, capped at 52px */
+  /* Dots grow to fill strip height evenly, capped at 80px */
   .phone-color-dot {
     flex: 1;
     min-height: 0;
-    max-height: 52px;
-    width: 52px;
+    max-height: 80px;
+    width: 58px;
     max-width: unset;
     height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 28%;
+  }
+
+  .phone-color-dot.active {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.4);
   }
 
   /* Icons: block display kills inline baseline gap that pushes them down */
@@ -2180,8 +2185,8 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 
   /* Gear button: now a direct bar item, always visible */
   .phone-gear-btn {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     background: rgba(255, 255, 255, 0.2);
     border: none;
     border-radius: 25%;
@@ -2200,25 +2205,61 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     filter: brightness(0) invert(1);
   }
 
-  /* Play button */
+  /* Play button — re-declare portrait-only styles for landscape */
   .phone-play-btn {
     width: 52px;
     height: 52px;
     flex-shrink: 0;
+    border-radius: 25%;
+    background: var(--buttonColor);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.15s;
   }
 
-  /* Undo/redo */
+  .phone-play-btn.stop-mode { background: #d44f5e !important; }
+  .phone-play-btn:active    { transform: scale(0.94); }
+
+  /* Undo/redo — re-declare portrait-only styles */
   .phone-action-btn {
     width: 40px !important;
     height: 40px !important;
     flex-shrink: 0;
+    border-radius: 25%;
+    background: var(--buttonColor);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 
-  /* Menu button */
+  /* Menu button — re-declare portrait-only styles */
   .phone-menu-btn {
     width: 40px;
     height: 40px;
     flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .phone-menu-btn:active { background: rgba(255, 255, 255, 0.35); }
+
+  .phone-menu-icon {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--buttonColor);
   }
 
   /* Drawer overlay: portrait sets this display:block inside max-width:500px,

@@ -2108,7 +2108,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 
   .main-container {
     overflow: hidden !important;
-    height: 100dvh;
+    height: 100vh;
   }
 
   /* Hide the desktop sidebar */
@@ -2118,7 +2118,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 
   /* Canvas fills the rest; left padding for the left bar */
   .canvas-container {
-    height: 100dvh;
+    height: 100vh;
     padding-bottom: 0 !important;
     padding-left: 80px;
     box-sizing: border-box;

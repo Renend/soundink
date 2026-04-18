@@ -910,10 +910,12 @@ const CanvasComponent = () => {
         const w = window.innerWidth, h = window.innerHeight;
         const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
         const bar = document.querySelector('.phone-bottom-bar');
+        // Always reset scroll on rotation — landscape→portrait can restore a stale
+        // scroll offset from before body was fixed, which offsets drawing coordinates.
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
         if (isLandscapePhone) {
-          window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
           if (bar) bar.style.height = '100vh';
         } else {
           if (bar) bar.style.height = '';
@@ -925,8 +927,8 @@ const CanvasComponent = () => {
         const w = window.innerWidth, h = window.innerHeight;
         const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
         const bar = document.querySelector('.phone-bottom-bar');
+        window.scrollTo(0, 0);
         if (isLandscapePhone) {
-          window.scrollTo(0, 0);
           if (bar) bar.style.height = '100vh';
         } else {
           if (bar) bar.style.height = '';

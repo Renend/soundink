@@ -903,44 +903,20 @@ const CanvasComponent = () => {
       // When rotating into landscape phone mode, the body may have a scroll offset
       // from portrait scrolling. That offset makes iOS touch coordinates wrong for
       // fixed-position buttons. Reset it immediately.
-      // iOS fires resize before innerHeight updates; double-RAF waits for layout.
+      // Scroll reset: iOS can retain a portrait scroll offset across rotation.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const w = window.innerWidth, h = window.innerHeight;
         const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
-        const bar = document.querySelector('.phone-bottom-bar');
         if (isLandscapePhone) {
           window.scrollTo(0, 0);
           document.documentElement.scrollTop = 0;
           document.body.scrollTop = 0;
-          // dvh can lag on iOS during rotation — force exact height via JS so
-          // bottom buttons are never pushed off-screen by a stale dvh value.
-          if (bar) bar.style.height = h + 'px';
-        } else {
-          if (bar) bar.style.height = '';
         }
       }));
     };
-    const fixBarHeight = () => {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        const w = window.innerWidth, h = window.innerHeight;
-        const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
-        const bar = document.querySelector('.phone-bottom-bar');
-        if (isLandscapePhone) {
-          window.scrollTo(0, 0);
-          if (bar) bar.style.height = h + 'px';
-        } else {
-          if (bar) bar.style.height = '';
-        }
-      }));
-    };
-
     window.addEventListener('resize', resizeListener);
-    window.addEventListener('orientationchange', fixBarHeight);
 
-    return () => {
-      window.removeEventListener('resize', resizeListener);
-      window.removeEventListener('orientationchange', fixBarHeight);
-    };
+    return () => window.removeEventListener('resize', resizeListener);
   }, [lines, gridConfig]);
 
   // Handles the slider input for changing playback speed

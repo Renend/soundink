@@ -2118,14 +2118,16 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 
   /* Canvas fills the rest; left padding for the left bar */
   .canvas-container {
-    height: 100dvh;
+    height: 100svh;
     padding-bottom: 0 !important;
     padding-left: 80px;
     box-sizing: border-box;
     overflow: hidden;
   }
 
-  /* Reorient the bottom bar into a left sidebar — 80px wide */
+  /* Reorient the bottom bar into a left sidebar — 80px wide.
+     Use top+bottom instead of height:dvh — a fixed element with both set always
+     fills the viewport exactly, with no dependence on dvh/svh lag during rotation. */
   .phone-bottom-bar {
     display: flex !important;
     flex-direction: column;
@@ -2135,10 +2137,10 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     position: fixed;
     left: 0;
     top: 0;
-    bottom: auto;
+    bottom: 0;
     right: auto;
     width: 80px;
-    height: 100dvh;
+    height: auto;
     padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px));
     background: var(--sideBarColor);
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);

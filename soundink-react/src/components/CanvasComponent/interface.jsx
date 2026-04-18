@@ -903,20 +903,45 @@ const CanvasComponent = () => {
       // When rotating into landscape phone mode, the body may have a scroll offset
       // from portrait scrolling. That offset makes iOS touch coordinates wrong for
       // fixed-position buttons. Reset it immediately.
-      // Scroll reset: iOS can retain a portrait scroll offset across rotation.
+      // iOS doesn't flush touch hit-targets on CSS media query changes — only on
+      // explicit JS style mutations. Setting bar height via JS forces that flush.
+      // Use screen.height (full screen height, unaffected by URL bar) so the bar
+      // is the same height on fresh load and after rotation.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const w = window.innerWidth, h = window.innerHeight;
         const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
+        const bar = document.querySelector('.phone-bottom-bar');
         if (isLandscapePhone) {
           window.scrollTo(0, 0);
           document.documentElement.scrollTop = 0;
           document.body.scrollTop = 0;
+          if (bar) bar.style.height = window.screen.height + 'px';
+        } else {
+          if (bar) bar.style.height = '';
         }
       }));
     };
-    window.addEventListener('resize', resizeListener);
+    const fixBarOnRotation = () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const w = window.innerWidth, h = window.innerHeight;
+        const isLandscapePhone = w > h && w / h >= 1.6 && h <= 500;
+        const bar = document.querySelector('.phone-bottom-bar');
+        if (isLandscapePhone) {
+          window.scrollTo(0, 0);
+          if (bar) bar.style.height = window.screen.height + 'px';
+        } else {
+          if (bar) bar.style.height = '';
+        }
+      }));
+    };
 
-    return () => window.removeEventListener('resize', resizeListener);
+    window.addEventListener('resize', resizeListener);
+    window.addEventListener('orientationchange', fixBarOnRotation);
+
+    return () => {
+      window.removeEventListener('resize', resizeListener);
+      window.removeEventListener('orientationchange', fixBarOnRotation);
+    };
   }, [lines, gridConfig]);
 
   // Handles the slider input for changing playback speed

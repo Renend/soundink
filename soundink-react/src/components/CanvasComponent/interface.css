@@ -2314,3 +2314,23 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     gap: 4px;
   }
 }
+
+/* Duplicate (Edit Mode): sits under the color grid, styled like the instrument buttons */
+.duplicate-button {
+  grid-column: 1 / -1;
+  height: 44px; /* comfortable touch target */
+  margin-top: 6px;
+  background-color: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 25px;
+  color: #1a1a1a;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.duplicate-button:hover {
+  background-color: #f0f0f0;
+  transform: scale(1.02);
+}

@@ -742,10 +742,26 @@ const CanvasComponent = () => {
       }
     };
 
+    // Edit Mode: Ctrl/Cmd+C copy, Ctrl/Cmd+V paste
+    const handleEditShortcuts = (event) => {
+      const { isEditMode, copySelection, pasteClipboard } = editShortcutsRef.current;
+      if (!isEditMode || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+
+      // Don't hijack typing in text fields (sliders are inputs too, so allow those)
+      const t = event.target;
+      if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range'))) return;
+
+      const key = event.key.toLowerCase();
+      if (key === 'c') { event.preventDefault(); copySelection(); }
+      else if (key === 'v') { event.preventDefault(); pasteClipboard(); }
+    };
+
     window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleEditShortcuts);
 
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener('keydown', handleEditShortcuts);
     };
   }, []);
 
@@ -1028,22 +1044,14 @@ const CanvasComponent = () => {
     return line.points.some(([px, py]) => px >= minX && px <= maxX && py >= minY && py <= maxY);
   };
 
-  const rebuildDraggedLineIntersections = (updatedLines, movedLineIds) => {
-    const updatedIntersectedDots = { ...intersectedDots.current };
-
-    for (const column in updatedIntersectedDots) {
-      for (const row in updatedIntersectedDots[column]) {
-        if (movedLineIds.includes(updatedIntersectedDots[column][row].lineId)) {
-          delete updatedIntersectedDots[column][row];
-        }
-      }
-    }
-
+  // Each grid cell holds only ONE stroke, so overlapping strokes (e.g. a fresh duplicate) overwrite each other.
+  // Rebuild from every stroke so cells covered by another stroke are restored when a stroke moves away.
+  const rebuildDraggedLineIntersections = (updatedLines) => {
+    const updatedIntersectedDots = {};
     const spatialHash = createSpatialHash(gridConfig);
-    movedLineIds.forEach((lineId) => {
-      const movedLine = updatedLines.find((line) => line.lineId === lineId);
-      if (movedLine) {
-        calculateIntersections(movedLine, gridConfig, updatedIntersectedDots, spatialHash);
+    updatedLines.forEach((line) => {
+      if (!line.isEraser) {
+        calculateIntersections(line, gridConfig, updatedIntersectedDots, spatialHash);
       }
     });
 
@@ -1645,6 +1653,93 @@ const CanvasComponent = () => {
 
     setSelectedLine(null); // Close the modal after updating
   };
+
+  // Duplicate / copy / paste (edit mode)
+  const clipboardRef = useRef([]); // stores copied strokes 
+  const pasteCountRef = useRef(0); // makes repeated pastes spread out instead of stacking
+  const DUPLICATE_OFFSET = 30; // px shift so the copy is visible
+
+  // Decides which strokes are selected - first sweep group, else single tapped stroke
+  const getActiveSelectionIds = () => {
+    if(selectedLineIds.length > 0) return selectedLineIds;
+    if(selectedLine) return [selectedLine.lineId];
+    return [];
+  }
+
+  // Adds shifted copies of sourceLines
+  const insertCopies = (sourceLines, step = 1) => {
+    if(sourceLines.length == 0) return;
+
+    let dx = DUPLICATE_OFFSET * step;
+    let dy = DUPLICATE_OFFSET * step;
+
+    // if copy goes offscreen, shift other way
+    const container = document.querySelector('.canvas-container')
+    if(container) {
+      const { width, height } = container.getBoundingClientRect()
+      const pts = sourceLines.flatMap((l) => l.points);
+      if(Math.max(...pts.map((p) => p[0])) + dx > width) dx = -dx;
+      if(Math.max(...pts.map((p) => p[1])) + dy > height) dy = -dy;
+    }
+
+    // build the copies
+    const copies = sourceLines.map((l) => ({
+      ...l,
+      lineId: uuidv4(),
+      points: l.points.map(([x,y]) => [x + dx, y + dy]),
+      intersections: {},
+      sonificationPoints: [],
+    }))
+    const copyIds = copies.map((l) => l.lineId);
+    const allLines = [...lines, ...copies]; // copies draw on top
+
+    // add this to undo - snapshot before the change
+    setUndoStack((prev) => [...prev, { lines, sonificationPoints, idInstrumentMap }]);
+    setRedoStack([]);
+
+    // add the strokes and register their instruments
+    setLines(allLines);
+    setIdInstrumentMap((prev) => {
+      const next = { ...prev };
+      copies.forEach((c) => { next[c.lineId] = c.instrument; });
+      idInstrumentMapRef.current = next;
+      return next;
+    });
+
+    // Register sound cells
+    rebuildDraggedLineIntersections(allLines, copyIds);
+
+    // Select the copies so the user can drag immediately
+    setSelectedLine(null);
+    setSelectedLineIds(copyIds);
+  };
+
+  const duplicateSelection = () => {
+    const ids = getActiveSelectionIds();
+    insertCopies(lines.filter((l) => ids.includes(l.lineId)));
+  };
+
+  const copySelection = () => {
+    const ids = getActiveSelectionIds();
+    if(ids.length == 0) return;
+    clipboardRef.current = lines.filter((l) => ids.includes(l.lineId));
+    pasteCountRef.current = 0;
+  };
+
+  const pasteClipboard = () => {
+    if(clipboardRef.current.length === 0) return;
+    pasteCountRef.current += 1;
+    insertCopies(clipboardRef.current, pasteCountRef.current);
+  };
+
+  /*
+  Notes:
+  - Keyboard listener is registered once, so it only sees stale state
+  - this ref is refreshed every render, so the listener can always reach the latest functions
+  */
+
+  const editShortcutsRef = useRef({});
+  editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard };
 
   const rebuildIntersectionsFromLines = (targetLines) => {
     const newIntersectedDots = {};
@@ -2280,6 +2375,9 @@ const CanvasComponent = () => {
                 />
               ))
             )}
+            <button className="duplicate-button" onClick={duplicateSelection}>
+              Duplicate
+            </button>
           </div>
 
           {/* Instrument Grid on the Right */}

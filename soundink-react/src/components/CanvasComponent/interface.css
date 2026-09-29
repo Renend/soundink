@@ -453,7 +453,7 @@ button {
 }
 
 .stop-mode {
-  background-color: #d44f5e !important;
+  background-color: #FF3D8B !important;
 }
 
 .play-stop-button:hover {
@@ -1099,6 +1099,10 @@ button:hover .instrument-sidebar-icon {
 .scale-option-button:hover {
   background-color: #891515;
   transform: scale(1.05);
+}
+
+.scale-option-button.active {
+  box-shadow: 0 0 0 5px #ffffff;
 }
 
 .scale-option-icon {
@@ -1899,7 +1903,7 @@ Portrait Phone: bottom bar layout
     padding: 0;
   }
 
-  .phone-play-btn.stop-mode { background: #d44f5e !important; }
+  .phone-play-btn.stop-mode { background: #FF3D8B !important; }
   .phone-play-btn:active    { transform: scale(0.94); }
 
   /* Undo / Redo */
@@ -2229,7 +2233,7 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     transition: transform 0.15s;
   }
 
-  .phone-play-btn.stop-mode { background: #d44f5e !important; border-radius: 25% !important; }
+  .phone-play-btn.stop-mode { background: #FF3D8B !important; border-radius: 25% !important; }
   .phone-play-btn:active    { transform: scale(0.94); }
 
   /* Undo/redo — smaller to give more height to the dot strip */

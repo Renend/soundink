@@ -32,31 +32,61 @@ const drawStar = (ctx, x, y, radius, color, rotationAngle = 0) => {
     ctx.restore(); // Restore the original context state
 };
 
-const DARKEN_FACTOR = 0.6; // Adjust this to control how much darker the color becomes
-const LIGHTEN_FACTOR = 3 ; // Adjust this to control how much brighter the color becomes
+const LIGHTNESS_SHIFT = 0.15; // How far the glow's lightness moves away from the stroke colour
+const SATURATION_BOOST = 1.15; // Slight saturation boost so the glow stays vivid
 
+const hexToHsl = (hexColor) => {
+    const r = parseInt(hexColor.slice(1, 3), 16) / 255;
+    const g = parseInt(hexColor.slice(3, 5), 16) / 255;
+    const b = parseInt(hexColor.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return [0, 0, l]; // Greyscale
+
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h;
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return [h / 6, s, l];
+};
+
+const hslToHex = (h, s, l) => {
+    const hueToRgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, '0');
+    return `#${toHex(hueToRgb(p, q, h + 1 / 3))}${toHex(hueToRgb(p, q, h))}${toHex(hueToRgb(p, q, h - 1 / 3))}`;
+};
+
+// Glow colour for the playhead: same hue as the stroke, only lightness/saturation shift.
+// (Scaling RGB channels directly clipped them and shifted the hue, e.g. dark red glowed pink.)
 const getContrastingGlowColor = (hexColor) => {
-    // Convert hex to RGB
-    const r = parseInt(hexColor.slice(1, 3), 16);
-    const g = parseInt(hexColor.slice(3, 5), 16);
-    const b = parseInt(hexColor.slice(5, 7), 16);
+    if (!/^#[0-9a-f]{6}$/i.test(hexColor)) return hexColor;
 
-    // Calculate brightness
-    const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+    const [h, s, l] = hexToHsl(hexColor);
+    const newL = l > 0.6 ? l - LIGHTNESS_SHIFT : Math.min(l + LIGHTNESS_SHIFT, 0.7);
+    const newS = Math.min(1, s * SATURATION_BOOST);
+    return hslToHex(h, newS, newL);
+};
 
-    // Adjust the color to be lighter or darker based on brightness
-    const adjustmentFactor = brightness > 128 ? DARKEN_FACTOR : LIGHTEN_FACTOR;
-    const adjust = (channel) =>
-        Math.min(255, Math.max(0, Math.round(channel * adjustmentFactor)));
+// Bright centre for a hit dot. The grid is drawn on top of the strokes, so a same-hue glow blends into
+// the stroke underneath; a near-white (or, for light strokes, deep) tint of the same hue stands out.
+const getGlowCoreColor = (hexColor) => {
+    if (!/^#[0-9a-f]{6}$/i.test(hexColor)) return hexColor;
 
-    const adjustedR = adjust(r);
-    const adjustedG = adjust(g);
-    const adjustedB = adjust(b);
-
-    // Return the adjusted color in hex format
-    return `#${adjustedR.toString(16).padStart(2, '0')}${adjustedG
-        .toString(16)
-        .padStart(2, '0')}${adjustedB.toString(16).padStart(2, '0')}`;
+    const [h, s, l] = hexToHsl(hexColor);
+    return l > 0.6 ? hslToHex(h, Math.min(1, s * SATURATION_BOOST), 0.3) : hslToHex(h, s, 0.92);
 };
 
 const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colorSlots }) => {
@@ -67,14 +97,15 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
     const drawGlowingDot = (ctx, x, y, color) => {
         ctx.save(); // Save the context state
 
-        // Get a contrasting glow color
+        // Same-hue glow around a high-contrast centre so hits stand out on top of the stroke
         const glowColor = getContrastingGlowColor(color);
+        const coreColor = getGlowCoreColor(color);
 
         const glowLayers = [
-            { blur: 20, sizeMultiplier: 2.2, color: `${glowColor}22` }, // Outer glow
-            { blur: 14, sizeMultiplier: 1.4, color: `${glowColor}44` }, // Mid glow
-            { blur: 9,  sizeMultiplier: 0.9, color: `${glowColor}99` }, // Inner glow
-            { blur: 4,  sizeMultiplier: 0.1, color: `${glowColor}CC` }  // Core glow
+            { blur: 24, sizeMultiplier: 2.6, color: `${glowColor}44` }, // Outer glow
+            { blur: 16, sizeMultiplier: 1.7, color: `${glowColor}88` }, // Mid glow
+            { blur: 10, sizeMultiplier: 1.1, color: `${glowColor}DD` }, // Inner glow
+            { blur: 6,  sizeMultiplier: 0.6, color: `${coreColor}FF` }  // Core
         ];
     
         glowLayers.forEach(({ blur, sizeMultiplier, color }) => {

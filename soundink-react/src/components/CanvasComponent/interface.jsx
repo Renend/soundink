@@ -93,11 +93,20 @@ const CanvasComponent = () => {
 
   // Add a new state to manage the colors for each slot
   const [colorSlots, setColorSlots] = useState({
-    color1: '#a9103a',
-    color2: '#043293',
-    color3: '#fead36',
+    color1: '#C90347',
+    color2: '#003C85',
+    color3: '#FEC92C',
     eraser: '#eae6e0'
   });
+
+  const isSameColor = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+
+  // In a multi-select, only show a colour/instrument as selected when every selected stroke shares it
+  const getSelectionValue = (line, getValue) => {
+    const ids = selectedLineIds.length > 1 && selectedLineIds.includes(line.lineId) ? selectedLineIds : [line.lineId];
+    const values = lines.filter((l) => ids.includes(l.lineId)).map(getValue);
+    return values.every((v) => v && values[0] && v.toLowerCase() === values[0].toLowerCase()) ? values[0] : null;
+  };
 
   const getSlotFromColor = (color) => {
     return Object.keys(colorSlots).find((slot) => colorSlots[slot] === color);
@@ -546,9 +555,9 @@ const CanvasComponent = () => {
         
         // Load UI/Playback state
         const loadedColorSlots = loadedData.colorSlots || {
-          color1: '#a9103a',
-          color2: '#043293',
-          color3: '#fead36',
+          color1: '#C90347',
+          color2: '#003C85',
+          color3: '#FEC92C',
           eraser: '#eae6e0'
         };
         setColorSlots(loadedColorSlots);
@@ -2268,7 +2277,7 @@ const CanvasComponent = () => {
             {Object.keys(scaleIcons).map((scale, index) => (
               <div key={index} className="scale-option-cell">
                 <button
-                  className="scale-option-button"
+                  className={`scale-option-button ${currentScale === scale ? 'active' : ''}`}
                   onClick={() => handleScaleChange(scale)}
                 >
                   <img
@@ -2308,7 +2317,7 @@ const CanvasComponent = () => {
                   // style={{ borderColor: color }}
                   // className="color-option"
                   className={`color-option ${ // changed - Renee
-                    colorSlots[selectedSlot] === color ? 'active' : ''
+                    isSameColor(colorSlots[selectedSlot], color) ? 'active' : ''
                   }`}
                   onClick={() => {
                     updateColorForSlot(selectedSlot, color); 
@@ -2367,7 +2376,7 @@ const CanvasComponent = () => {
                   // style={{ borderColor: color }}
                   // className="color-option"
                   className={`color-option ${
-                    selectedLine.color === color ? 'active' : ''
+                    isSameColor(getSelectionValue(selectedLine, (l) => l.color), color) ? 'active' : ''
                   }`}
                   onClick={() => {
                     updateLineColor(selectedLine, color); // Update the line's color
@@ -2386,7 +2395,9 @@ const CanvasComponent = () => {
               <div key={index} className="instrument-option-cell">
                 <button
                   onClick={() => updateLineInstrument(selectedLine, instrument)} // Update the line's instrument
-                  className="instrument-option-button"
+                  className={`instrument-option-button ${
+                    getSelectionValue(selectedLine, (l) => idInstrumentMap[l.lineId] || l.instrument) === instrument ? 'active' : ''
+                  }`}
                 >
                   <img
                     src={instrumentIcons[instrument]}

@@ -481,31 +481,32 @@ const CanvasComponent = () => {
     // Play the sonification with the specified number of loops
     for (let iteration = 0; iteration <= loops; iteration++) {
       for (let column = firstColumn; column < gridConfigRef.current.numDotsX; column++) {
-        if (intersectedDots.current[column]) {
+        if (polyphonicDots.current[column]) {
           const playPromises = [];
           
           // Determine if this is an accent column
           const isAccentColumn = (column - firstColumn) % gridConfigRef.current.accent === 0;
           
-          for (const row in intersectedDots.current[column]) {
-            const { color, lineId } = intersectedDots.current[column][row];
-            const instrument = idInstrumentMapRef.current[lineId];
+          for (const row in polyphonicDots.current[column]) {
             const mapRowToNote = getMapRowToNote();
             const note = mapRowToNote[row];
+            for (const { color, lineId } of polyphonicDots.current[column][row]) {
+              const instrument = idInstrumentMapRef.current[lineId];
 
-            playPromises.push(
-              playSound(
-                color,
-                note,
-                1,
-                playbackSpeedRef.current,
-                lineId,
-                { [color]: instrument },
-                isAccentColumn,
-                audioContext,
-                destination
-              )
-            );
+              playPromises.push(
+                playSound(
+                  color,
+                  note,
+                  1,
+                  playbackSpeedRef.current,
+                  lineId,
+                  { [color]: instrument },
+                  isAccentColumn,
+                  audioContext,
+                  destination
+                )
+              );
+            }
           }
           await Promise.all(playPromises);
         }
@@ -1068,6 +1069,28 @@ const CanvasComponent = () => {
     setIntersectedDotsState({ ...updatedIntersectedDots });
   };
 
+  // Polyphony: every stroke covering a cell is played, not just the one on top.
+  // intersectedDots keeps one stroke per cell (the top one) for the grid visuals; this map lists all of them.
+  const polyphonicDots = useRef({});
+
+  useEffect(() => {
+    const allDots = {};
+    const spatialHash = createSpatialHash(gridConfig);
+    lines.forEach((line) => {
+      if (line.isEraser) return;
+      const lineDots = {};
+      calculateIntersections(line, gridConfig, lineDots, spatialHash);
+      for (const column in lineDots) {
+        if (!allDots[column]) allDots[column] = {};
+        for (const row in lineDots[column]) {
+          if (!allDots[column][row]) allDots[column][row] = [];
+          allDots[column][row].push(lineDots[column][row]);
+        }
+      }
+    });
+    polyphonicDots.current = allDots;
+  }, [lines, gridConfig]);
+
   // Called when user starts drawing (pointer down)
   const handlePointerDown = (e) => {
     setWasDragged(false); didActuallyDragRef.current = false; // Reset the dragging flag
@@ -1575,28 +1598,26 @@ const CanvasComponent = () => {
       const isAccentColumn = (column - firstColumn) % gridConfigRef.current.accent === 0;
 
       // Check the latest colorInstrumentMap and play sounds accordingly
-      if (intersectedDots.current[column]) {
+      if (polyphonicDots.current[column]) {
         const playPromises = [];
-        for (const row in intersectedDots.current[column]) {
-          const { color, lineId } = intersectedDots.current[column][row];
-          // const { lineId } = intersectedDots.current[column][row];
-          // const instrument = idInstrumentMap[lineId]; // Get the instrument from idInstrumentMap
-          const instrument = idInstrumentMapRef.current[lineId]; // Use the ref to get the instrument
-          // console.log("Instrument for lineId:", lineId, "is", instrument);
+        for (const row in polyphonicDots.current[column]) {
           const mapRowToNote = getMapRowToNote();
           const note = mapRowToNote[row];
-      
-          playPromises.push(
-            playSound(
-              color,
-              note,
-              1,
-              playbackSpeedRef.current,
-              lineId,
-              { [color]: instrument }, // Pass the instrument for this line
-              isAccentColumn
-            )
-          );
+          for (const { color, lineId } of polyphonicDots.current[column][row]) {
+            const instrument = idInstrumentMapRef.current[lineId]; // Use the ref to get the instrument
+
+            playPromises.push(
+              playSound(
+                color,
+                note,
+                1,
+                playbackSpeedRef.current,
+                lineId,
+                { [color]: instrument }, // Pass the instrument for this line
+                isAccentColumn
+              )
+            );
+          }
         }
         await Promise.all(playPromises);
       }

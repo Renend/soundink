@@ -1,5 +1,4 @@
 import React, { useRef, useEffect } from 'react';
-import { getStroke } from 'perfect-freehand';
 import { firstColumn, numDotsX, numDotsY, dotRadius } from './gridConfig'; // Import constants
 
 const ERASER_COLOR = '#eae6e1'; // Choose a color that represents the eraser
@@ -130,32 +129,11 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
         if (isScanned || isIntersected) {
             drawGlowingDot(ctx, x, y, color);
         } else {
-            const circlePoints = [
-                [x - dotRadius, y],
-                [x, y - dotRadius],
-                [x + dotRadius, y],
-                [x, y + dotRadius],
-                [x - dotRadius, y],
-            ];
-
-            const path = getStroke(circlePoints, {
-                size: dotRadius * 2,
-                thinning: 0,
-                smoothing: 1,
-                streamline: 1,
-                start: { taper: 0 },
-                end: { taper: 0 },
-            });
-
+            // Plain dot. (Previously drawn with perfect-freehand's getStroke on every redraw, which was slow and
+            // put the dot dotRadius px left of its real position; the glow and hit detection use the true centre.)
             ctx.fillStyle = color;
             ctx.beginPath();
-            path.forEach(([px, py], i) => {
-                if (i === 0) {
-                    ctx.moveTo(px, py);
-                } else {
-                    ctx.lineTo(px, py);
-                }
-            });
+            ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
             ctx.closePath();
             ctx.fill();
         }

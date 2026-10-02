@@ -1,12 +1,24 @@
-import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import './interface.css'; // Importing the associated CSS file for styles
-import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, resumeAudioContext, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, numDotsX, numDotsY, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
+import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, resumeAudioContext, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
 import { mapNoteToSampleNumber, scales } from './soundMappings';
 import { Canvg } from 'canvg';
 import pointInPolygon from 'point-in-polygon'; // Import the library
 import { getStrokePoints, getStrokeOutlinePoints } from 'perfect-freehand'; // Importing the necessary functions from perfect-freehand
 
 const pointInterpolationDivisor = 10; // Adjust this value to control the density of interpolated points
+
+// Cache of each stroke's SVG outline, keyed by its points array. Stroke updates are immutable, so an unchanged
+// stroke keeps the same points array and its outline is reused instead of being recomputed on every render
+// (every pointer move, playhead step and drag frame). Recolouring keeps the points, so it's a cache hit too.
+const strokePathCache = new WeakMap();
+const getStrokePath = (points, size) => {
+  const cached = strokePathCache.get(points);
+  if (cached && cached.size === size) return cached.path;
+  const path = getSvgPathFromStroke(getStroke(points, { ...options, size }));
+  strokePathCache.set(points, { size, path });
+  return path;
+};
 
 const CanvasComponent = () => {
   const [activePointerId, setActivePointerId] = useState(null); // Track the active pointer ID
@@ -63,7 +75,6 @@ const CanvasComponent = () => {
   const [dragOffset, setDragOffset] = useState([0, 0]); // Tracks the offset between the pointer and the line
   const [originalLinePoints, setOriginalLinePoints] = useState(null); // Store the original points of the dragged line
   const [initialDragPoint, setInitialDragPoint] = useState(null); // Store the initial cursor position
-  const [intersectedDotsState, setIntersectedDotsState] = useState({});
   const [wasDragged, setWasDragged] = useState(false);
   const didActuallyDragRef = useRef(false); // ref mirror used only for undo commit in pointer-up
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
@@ -240,8 +251,8 @@ const CanvasComponent = () => {
     setGridIndex(newIndex);
     setGridConfig(gridConfigurations[newIndex]);
   
-    const { numDotsX, numDotsY, dotRadius } = gridConfigurations[newIndex];
-  
+    const { numDotsX } = gridConfigurations[newIndex];
+
     // Adjust the current column based on the new grid configuration
     setCurrentColumn((prevColumn) => {
       if (prevColumn >= numDotsX) {
@@ -249,65 +260,7 @@ const CanvasComponent = () => {
       }
       return prevColumn;
     });
-  
-    const updatedIntersectedDots = {};
-  
-    // Create a spatial hash for the new grid
-    const spatialHash = createSpatialHash(gridConfigurations[newIndex]);
-  
-    const updatedLines = lines.map((line) => {
-      const newIntersections = {};
-  
-      // Interpolate points for the line
-      const interpolatedPoints = [];
-      for (let i = 0; i < line.points.length - 1; i++) {
-        const start = line.points[i];
-        const end = line.points[i + 1];
-        const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
-        const numInterpolatedPoints = Math.floor(distance / pointInterpolationDivisor); // Adjust interpolation density
-        interpolatedPoints.push(...interpolatePoints(start, end, numInterpolatedPoints));
-      }
-  
-      const allPoints = [...line.points, ...interpolatedPoints]; // Combine original and interpolated points
-  
-      // Recalculate intersections for the new grid using spatial hashing
-      allPoints.forEach((point) => {
-        const cellSizeX = canvasDimensions.width / numDotsX;
-        const cellSizeY = canvasDimensions.height / numDotsY;
-        const cellX = Math.floor(point[0] / cellSizeX);
-        const cellY = Math.floor(point[1] / cellSizeY);
-        const cellKey = `${cellX},${cellY}`;
-  
-        if (spatialHash[cellKey]) {
-          spatialHash[cellKey].forEach((dot) => {
-            if (isPointNearDot(point[0], point[1], dot.x, dot.y, dotRadius, line.size)) {
-              if (!newIntersections[dot.col]) newIntersections[dot.col] = {};
-              if (!updatedIntersectedDots[dot.col]) updatedIntersectedDots[dot.col] = {};
-  
-              newIntersections[dot.col][dot.row] = {
-                point: [dot.x, dot.y],
-                color: line.color,
-                highlightColor: line.highlightColor,
-                size: line.size,
-                lineId: line.lineId,
-              };
-              updatedIntersectedDots[dot.col][dot.row] = {
-                point: [dot.x, dot.y],
-                color: line.color,
-                highlightColor: line.highlightColor,
-                size: line.size,
-                lineId: line.lineId,
-              };
-            }
-          });
-        }
-      });
-  
-      return { ...line, intersections: newIntersections };
-    });
-  
-    setLines(updatedLines);
-    intersectedDots.current = updatedIntersectedDots;
+    // The stroke-to-dot mapping is rebuilt from gridConfig automatically (see dotMaps)
   };
 
   const handleSaveDrawing = () => {
@@ -327,44 +280,6 @@ const CanvasComponent = () => {
 
     setIsDownloading(false);
     setIsSavePopupVisible(false); // Hide the pop-up after saving
-  };
-
-  const confirmSaveDrawing = () => {
-    // const dataToSave = { lines, sonificationPoints, colorInstrumentMap };
-    const dataToSave = {
-      // Drawing data
-      lines,                    // All line objects with their intersections
-      
-      // Instrument mapping
-      idInstrumentMap,          // CRITICAL - maps lineId to instrument
-      
-      // UI/Playback state
-      colorInstrumentMap,       // Current color slot -> instrument mapping
-      colorSlots,              // Custom colors for each slot
-      currentScale,            // Musical scale (e.g., 'pentatonicMinor')
-      gridIndex,               // Which grid config (0-5)
-      bpm,                     // Tempo
-      volume,                  // Master volume
-    };
-
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgRef.current);
-
-    const fileData = {
-      dataset: dataToSave,
-      svg: svgString,
-    };
-
-    const jsonBlob = new Blob([JSON.stringify(fileData)], { type: "application/json" });
-    const url = URL.createObjectURL(jsonBlob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "drawing.json";
-    a.click();
-
-    URL.revokeObjectURL(url);
-    // setIsSavePopupVisible(false); // Hide the pop-up
   };
 
   // const cancelSaveDrawing = () => {
@@ -551,26 +466,6 @@ const CanvasComponent = () => {
         const loadedVolume = loadedData.volume !== undefined ? loadedData.volume : 0.8;
         setVolume(loadedVolume);
         setMasterVolume(loadedVolume); // Apply to audio system
-
-        // Rebuild intersectedDots to link sonification points for playback
-        const updatedIntersectedDots = {};
-        loadedLines.forEach((line) => {
-          if (line.intersections) {
-            Object.entries(line.intersections).forEach(([column, rows]) => {
-              if (!updatedIntersectedDots[column]) updatedIntersectedDots[column] = {};
-              Object.entries(rows).forEach(([row, intersectionData]) => {
-                updatedIntersectedDots[column][row] = {
-                  ...intersectionData,
-                  color: line.color,              // Use the line's actual hex color
-                  highlightColor: line.highlightColor || line.color  // Use the line's highlight color
-                };
-              });
-            });
-          }
-        });
-
-        // Update the intersectedDots reference
-        intersectedDots.current = updatedIntersectedDots;
       }
     };
 
@@ -619,7 +514,6 @@ const CanvasComponent = () => {
   const confirmClearScreen = () => {
     setLines([]); // Clear all lines
     setSonificationPoints([]); // Clear all sonification points
-    intersectedDots.current = {}; // Clear intersection data
     setIsClearScreenPopupVisible(false); // Hide the pop-up
   };
 
@@ -866,7 +760,7 @@ const CanvasComponent = () => {
     const scaleX = newWidth / originalSvgSize.current.width;
     const scaleY = newHeight / originalSvgSize.current.height;
 
-    // Update each line's points and recalculate intersections
+    // Update each line's points (the stroke-to-dot mapping is rebuilt from them automatically)
     const resizedLines = lines.map((line) => {
       const scaledPoints = line.points.map(([x, y]) => [x * scaleX, y * scaleY]);
       
@@ -874,24 +768,12 @@ const CanvasComponent = () => {
       const scaledLine = {
         ...line,
         points: scaledPoints,
-        intersections: {}, // Reset intersections, will be recalculated
       };
       
       return scaledLine;
     });
 
-    // Recalculate all intersections with the grid
-    const updatedIntersectedDots = {};
-    const spatialHash = createSpatialHash(gridConfigRef.current);
-
-    resizedLines.forEach((line) => {
-      calculateIntersections(line, gridConfigRef.current, updatedIntersectedDots, spatialHash);
-    });
-
-    // Update lines and intersections
     setLines(resizedLines);
-    intersectedDots.current = updatedIntersectedDots;
-    setIntersectedDotsState({ ...updatedIntersectedDots });
 
     // Update the original size reference
     originalSvgSize.current = { width: newWidth, height: newHeight };
@@ -1028,42 +910,61 @@ const CanvasComponent = () => {
     return line.points.some(([px, py]) => px >= minX && px <= maxX && py >= minY && py <= maxY);
   };
 
-  // Each grid cell holds only ONE stroke, so overlapping strokes (e.g. a fresh duplicate) overwrite each other.
-  // Rebuild from every stroke so cells covered by another stroke are restored when a stroke moves away.
-  const rebuildDraggedLineIntersections = (updatedLines) => {
-    const updatedIntersectedDots = {};
-    const spatialHash = createSpatialHash(gridConfig);
-    updatedLines.forEach((line) => {
-      if (!line.isEraser) {
-        calculateIntersections(line, gridConfig, updatedIntersectedDots, spatialHash);
-      }
-    });
+  // Stroke-to-grid-dot mapping, derived from `lines`. Each stroke's covered dots are cached by its points array,
+  // so adding, moving or recolouring a stroke only recomputes the strokes whose points changed.
+  const strokeCellsCache = useRef(new WeakMap()).current;
+  const spatialHashCache = useRef({ key: null, hash: null }).current;
 
-    intersectedDots.current = updatedIntersectedDots;
-    setIntersectedDotsState({ ...updatedIntersectedDots });
+  const getStrokeCells = (line, gridKey) => {
+    const key = `${gridKey}|${line.size}`;
+    const cached = strokeCellsCache.get(line.points);
+    if (cached && cached.key === key) return cached.cells;
+
+    const lineDots = {};
+    calculateIntersections(line, gridConfig, lineDots, spatialHashCache.hash);
+    const cells = [];
+    for (const column in lineDots) {
+      for (const row in lineDots[column]) {
+        cells.push([column, row, lineDots[column][row].point]);
+      }
+    }
+    strokeCellsCache.set(line.points, { key, cells });
+    return cells;
   };
 
-  // Polyphony: every stroke covering a cell is played, not just the one on top.
-  // intersectedDots keeps one stroke per cell (the top one) for the grid visuals; this map lists all of them.
-  const polyphonicDots = useRef({});
+  const dotMaps = useMemo(() => {
+    const gridKey = `${gridConfig.numDotsX}x${gridConfig.numDotsY}r${gridConfig.dotRadius}@${canvasDimensions.width}x${canvasDimensions.height}`;
+    if (spatialHashCache.key !== gridKey) {
+      spatialHashCache.key = gridKey;
+      spatialHashCache.hash = createSpatialHash(gridConfig);
+    }
 
-  useEffect(() => {
-    const allDots = {};
-    const spatialHash = createSpatialHash(gridConfig);
+    const top = {}; // One stroke per dot (the top one) for the grid visuals
+    const all = {}; // Every stroke per dot, for polyphonic playback
     lines.forEach((line) => {
       if (line.isEraser) return;
-      const lineDots = {};
-      calculateIntersections(line, gridConfig, lineDots, spatialHash);
-      for (const column in lineDots) {
-        if (!allDots[column]) allDots[column] = {};
-        for (const row in lineDots[column]) {
-          if (!allDots[column][row]) allDots[column][row] = [];
-          allDots[column][row].push(lineDots[column][row]);
-        }
+      for (const [column, row, point] of getStrokeCells(line, gridKey)) {
+        const entry = {
+          point,
+          color: line.color,
+          highlightColor: line.highlightColor,
+          size: line.size,
+          lineId: line.lineId,
+          instrument: line.instrument,
+        };
+        if (!top[column]) top[column] = {};
+        if (!all[column]) all[column] = {};
+        top[column][row] = entry; // Later strokes are drawn on top, so they win
+        (all[column][row] ||= []).push(entry);
       }
     });
-    polyphonicDots.current = allDots;
-  }, [lines, gridConfig]);
+    return { top, all };
+  }, [lines, gridConfig]); // The caches are refs, so only lines and gridConfig can change the result
+
+  // Refs so the async playback loop always reads the latest mapping
+  intersectedDots.current = dotMaps.top;
+  const polyphonicDots = useRef({});
+  polyphonicDots.current = dotMaps.all;
 
   // Plays every stroke in one column. Strokes stacked on the same note with the same instrument are merged into
   // one voice (identical samples in phase just add up and overload the limiter), and the column is turned down
@@ -1223,13 +1124,6 @@ const CanvasComponent = () => {
       if (clickedLine) {
         // Single-click delete: remove the tapped stroke immediately
         const snapshot = { lines, sonificationPoints, idInstrumentMap };
-        for (const column in intersectedDots.current) {
-          for (const row in intersectedDots.current[column]) {
-            if (intersectedDots.current[column][row].lineId === clickedLine.lineId) {
-              delete intersectedDots.current[column][row];
-            }
-          }
-        }
         stopSoundsForLine(clickedLine.lineId);
         const updatedLines = lines.filter((l) => l.lineId !== clickedLine.lineId);
         const remainingSonificationPoints = updatedLines.flatMap((l) => l.sonificationPoints);
@@ -1284,7 +1178,6 @@ const CanvasComponent = () => {
         });
 
         setLines(updatedLines);
-        rebuildDraggedLineIntersections(updatedLines, draggedLineIds);
         return;
       }
 
@@ -1372,16 +1265,7 @@ const CanvasComponent = () => {
       if (toDelete.length > 0) {
         sweepErasedRef.current = true;
         const toDeleteIds = new Set(toDelete.map((l) => l.lineId));
-        toDeleteIds.forEach((lineId) => {
-          for (const column in intersectedDots.current) {
-            for (const row in intersectedDots.current[column]) {
-              if (intersectedDots.current[column][row].lineId === lineId) {
-                delete intersectedDots.current[column][row];
-              }
-            }
-          }
-          stopSoundsForLine(lineId);
-        });
+        toDeleteIds.forEach((lineId) => stopSoundsForLine(lineId));
         const updatedLines = lines.filter((l) => !toDeleteIds.has(l.lineId));
         setLines(updatedLines);
         setSonificationPoints(updatedLines.flatMap((l) => l.sonificationPoints));
@@ -1551,40 +1435,9 @@ const CanvasComponent = () => {
         [lineId]: colorInstrumentMap[currentColor],
       }));
 
-      // Add intersections to both intersectedDots and newLine.intersections
-      sonificationPoints.forEach((point) => {
-        // sonificationPoints.forEach((point, pointIndex) => {
-        for (let i = 0; i < numDotsX; i++) {
-          for (let j = 0; j < numDotsY; j++) {
-
-            const dotX = (canvasDimensions.width / gridConfig.numDotsX) * i + canvasDimensions.width / gridConfig.numDotsX / 2;
-            const dotY = (canvasDimensions.height / gridConfig.numDotsY) * j + canvasDimensions.height / gridConfig.numDotsY / 2;
-
-            // if (isPointNearDot(point[0], point[1], dotX, dotY, dotRadius, currentSize)) {
-            if (isPointNearDot(point[0], point[1], dotX, dotY, gridConfig.dotRadius, currentSize)) {
-              if (!intersectedDots.current[i]) intersectedDots.current[i] = {};
-              if (!newLine.intersections[i]) newLine.intersections[i] = {};
-
-              intersectedDots.current[i][j] = { point, color: currentColor, size: currentSize, lineId };
-              newLine.intersections[i][j] = { point, color: currentColor, size: currentSize, lineId };
-            }
-          }
-        }
-      });
-
-      const updatedIntersectedDots = { ...intersectedDots.current };
-
-      const spatialHash = createSpatialHash(gridConfig);
-      calculateIntersections(newLine, gridConfig, updatedIntersectedDots, spatialHash);
-
-      // Update the intersectedDots reference and trigger a re-render
-      // intersectedDots.current = updatedIntersectedDots;
-      setIntersectedDotsState({ ...updatedIntersectedDots });
-
-      // Save the new line and reset the current state
+      // Save the new line and reset the current state (its grid dots are computed once, in dotMaps)
       setUndoStack([...undoStack, { lines, sonificationPoints, idInstrumentMap }]);
       setLines((prevLines) => [...prevLines, newLine]);
-      intersectedDots.current = updatedIntersectedDots; // IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST // IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST// IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST// IF NOT COMMENTED, THIS LINE WILL CAUSE THE LOTS OF INTERSECTIONS TO BE LOST
       setRedoStack([]);
       setCurrentLine([]);
       setSonificationPoints([]);
@@ -1647,14 +1500,6 @@ const CanvasComponent = () => {
         idsToUpdate.includes(l.lineId) ? { ...l, color: newColor, highlightColor: newColor } : l
       )
     );
-
-    for (const column in intersectedDots.current) {
-      for (const row in intersectedDotsState[column]) {
-        if (idsToUpdate.includes(intersectedDotsState[column][row].lineId)) {
-          intersectedDotsState[column][row].color = newColor;
-        }
-      }
-    }
 
     setSelectedLine(null); // Close the modal after updating
   };
@@ -1734,9 +1579,6 @@ const CanvasComponent = () => {
       return next;
     });
 
-    // Register sound cells
-    rebuildDraggedLineIntersections(allLines, copyIds);
-
     // Select the copies so the user can drag immediately
     setSelectedLine(null);
     setSelectedLineIds(copyIds);
@@ -1769,16 +1611,6 @@ const CanvasComponent = () => {
   const editShortcutsRef = useRef({});
   editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard };
 
-  const rebuildIntersectionsFromLines = (targetLines) => {
-    const newIntersectedDots = {};
-    const spatialHash = createSpatialHash(gridConfig);
-    targetLines.forEach(line => {
-      if (!line.isEraser) {
-        calculateIntersections(line, gridConfig, newIntersectedDots, spatialHash);
-      }
-    });
-    intersectedDots.current = newIntersectedDots;
-  };
 
   // Undo and redo logic for managing drawing history
   const handleUndo = () => {
@@ -1792,7 +1624,6 @@ const CanvasComponent = () => {
         setIdInstrumentMap(previousState.idInstrumentMap);
         idInstrumentMapRef.current = previousState.idInstrumentMap;
       }
-      rebuildIntersectionsFromLines(previousState.lines);
     }
   };
 
@@ -1808,7 +1639,6 @@ const CanvasComponent = () => {
         setIdInstrumentMap(nextState.idInstrumentMap);
         idInstrumentMapRef.current = nextState.idInstrumentMap;
       }
-      rebuildIntersectionsFromLines(nextState.lines);
     }
   };
 
@@ -1876,11 +1706,8 @@ const CanvasComponent = () => {
     );
   };
 
-  const allStrokes = lines.map((line, index) => {
-    const strokeOptions = { ...options, size: line.size };
-
-    // Added - Renee
-    const pathData = getSvgPathFromStroke(getStroke(line.points, strokeOptions));
+  const allStrokes = lines.map((line) => {
+    const pathData = getStrokePath(line.points, line.size); // Cached; only recomputed when this stroke changes
 
     const isHighlighted =
       isEditMode && (selectedLineIds.includes(line.lineId) ||
@@ -1890,7 +1717,7 @@ const CanvasComponent = () => {
 
     // changed - Renee
     return (
-      <g key={index}>
+      <g key={line.lineId}>
         {isHighlighted && (
           <path
             d={pathData}

@@ -46,10 +46,11 @@ const getAudioContext = () => {
     masterGainNode.gain.value = 0.8;
 
     limiterNode = audioCtx.createDynamicsCompressor();
-    limiterNode.threshold.setValueAtTime(-6, audioCtx.currentTime);
+    // Safety ceiling: catches loud peaks (e.g. many duplicated strokes) before they reach the speakers
+    limiterNode.threshold.setValueAtTime(-10, audioCtx.currentTime);
     limiterNode.knee.setValueAtTime(0, audioCtx.currentTime);
     limiterNode.ratio.setValueAtTime(20, audioCtx.currentTime);
-    limiterNode.attack.setValueAtTime(0.003, audioCtx.currentTime);
+    limiterNode.attack.setValueAtTime(0.001, audioCtx.currentTime);
     limiterNode.release.setValueAtTime(0.25, audioCtx.currentTime);
 
     masterGainNode.connect(limiterNode);
@@ -67,11 +68,21 @@ export const resumeAudioContext = async () => {
   }
 };
 
-const MAX_CACHE_SIZE = 50; // Set a limit for the cache size
-const MAX_ACTIVE_SOURCES = 20;
+// 6 instruments x 15 notes per scale = 90 samples in the worst case; each decoded sample is ~1 MB (mono, ~5 s)
+const MAX_CACHE_SIZE = 90;
+const MAX_ACTIVE_SOURCES = 64; // Voice limit: the oldest notes fade out when more than this are playing
+const VOICE_STEAL_FADE = 0.08; // Seconds to fade out a stolen voice (avoids clicks)
 
-// Cache for audio buffers to avoid reloading sounds repeatedly
-const bufferCache = {};
+// Cache of decoded buffers (or in-flight decode promises), kept in least-recently-used order.
+// Storing the promise means several strokes asking for the same sample at once share one decode.
+const bufferCache = new Map();
+
+// One shared IndexedDB connection instead of opening the database for every note
+let dbPromise = null;
+const getDB = () => {
+  if (!dbPromise) dbPromise = openDB(DB_NAME, STORE_NAME);
+  return dbPromise;
+};
 
 // Store references to active audio sources
 let activeSources = [];
@@ -80,7 +91,7 @@ let activeSources = [];
 // Decoding into AudioBuffers is deferred until first playback (after user gesture).
 export const preloadSounds = async () => {
   const soundFiles = generateSoundFiles();
-  const db = await openDB(DB_NAME, STORE_NAME);
+  const db = await getDB();
 
   try {
     for (const filePath of soundFiles) {
@@ -100,26 +111,34 @@ export const preloadSounds = async () => {
 };
 
 // Function to load an audio buffer for a specific sample
-const loadAudioBuffer = async (filePath) => {
-  if (bufferCache[filePath]) {
-    return bufferCache[filePath]; // Return cached buffer if it exists
+const loadAudioBuffer = (filePath) => {
+  const cached = bufferCache.get(filePath);
+  if (cached) {
+    // Move to the end so it counts as recently used
+    bufferCache.delete(filePath);
+    bufferCache.set(filePath, cached);
+    return cached;
   }
 
-  if (Object.keys(bufferCache).length >= MAX_CACHE_SIZE) {
-    // Remove the oldest entry in the cache if it exceeds the limit
-    delete bufferCache[Object.keys(bufferCache)[0]];
+  if (bufferCache.size >= MAX_CACHE_SIZE) {
+    // Evict the least recently used sample
+    bufferCache.delete(bufferCache.keys().next().value);
   }
 
-  const db = await openDB(DB_NAME, STORE_NAME);
-  let arrayBuffer = await getFromDB(db, STORE_NAME, filePath);
-  if (!arrayBuffer) {
-    const response = await fetch(filePath);
-    arrayBuffer = await response.arrayBuffer();
-    await saveToDB(db, STORE_NAME, filePath, arrayBuffer);
-  }
-  const audioBuffer = await getAudioContext().decodeAudioData(arrayBuffer.slice(0));
-  bufferCache[filePath] = audioBuffer; // Cache the loaded buffer
-  return audioBuffer;
+  const loading = (async () => {
+    const db = await getDB();
+    let arrayBuffer = await getFromDB(db, STORE_NAME, filePath);
+    if (!arrayBuffer) {
+      const response = await fetch(filePath);
+      arrayBuffer = await response.arrayBuffer();
+      await saveToDB(db, STORE_NAME, filePath, arrayBuffer);
+    }
+    return getAudioContext().decodeAudioData(arrayBuffer.slice(0));
+  })();
+
+  bufferCache.set(filePath, loading);
+  loading.catch(() => bufferCache.delete(filePath)); // Allow a retry if loading failed
+  return loading;
 };
 
 // Define ADSR, detuning, base volume, and sustain settings for each instrument
@@ -153,7 +172,8 @@ export const playSound = async (
   colorInstrumentMap,
   accent = false,
   audioContext = null, // If null, uses the global lazy-initialized context
-  destination = null // Default to null if not provided
+  destination = null, // Default to null if not provided
+  gainScale = 1 // Extra volume multiplier (e.g. for several strokes stacked on the same note)
 ) => {
   if (!color || !note || !colorInstrumentMap[color]) {
     console.error("Invalid sound parameters:", { color, note, colorInstrumentMap });
@@ -207,7 +227,7 @@ export const playSound = async (
   const randomAmplitudeVariation = getRandomVariation(0.2, 0.4);
 
   const adjustedVolume = Math.min(
-    (1 / Math.sqrt(polyphonyCount)) * settings.baseVolume * randomAmplitudeVariation * accentMultiplier,
+    (1 / Math.sqrt(polyphonyCount)) * settings.baseVolume * randomAmplitudeVariation * accentMultiplier * gainScale,
     1
   );
 
@@ -229,11 +249,17 @@ export const playSound = async (
   source.connect(filterNode);
   filterNode.connect(gainNode);
 
+  // Separate gain used only for voice stealing. Its value is always known (1), so fading it out can't jump.
+  // (Fading the envelope gain itself read gain.value, which some browsers report as 1 mid-envelope —
+  // that made every stolen note blast at full volume for a moment.)
+  const stealGainNode = audioContext.createGain();
+  gainNode.connect(stealGainNode);
+
   // Connect the gainNode to the destination if provided
   if (destination) {
-    gainNode.connect(destination);
+    stealGainNode.connect(destination);
   } else {
-    gainNode.connect(masterGainNode); // masterGainNode is initialized by getAudioContext()
+    stealGainNode.connect(masterGainNode); // masterGainNode is initialized by getAudioContext()
   }
 
   const attack = settings.attack;
@@ -262,8 +288,29 @@ export const playSound = async (
   source.start(currentTime);
   source.stop(currentTime + attack + decay + sustainDuration + release);
 
-  // Store the active source, associated with its line
-  activeSources.push({ source, lineId });
+  // Track the voice so it can be stopped (per line) or stolen, and forget it once it ends
+  const voice = { source, stealGainNode, audioContext, lineId };
+  activeSources.push(voice);
+  source.onended = () => {
+    activeSources = activeSources.filter((v) => v !== voice);
+  };
+
+  // Voice limit: too many overlapping notes overload the audio thread and make playback crackle or drop out
+  while (activeSources.length > MAX_ACTIVE_SOURCES) {
+    fadeOutVoice(activeSources.shift());
+  }
+};
+
+// Quickly fade out and stop a voice (a hard stop would click)
+const fadeOutVoice = ({ source, stealGainNode, audioContext }) => {
+  const now = audioContext.currentTime;
+  try {
+    stealGainNode.gain.setValueAtTime(1, now);
+    stealGainNode.gain.linearRampToValueAtTime(0, now + VOICE_STEAL_FADE);
+    source.stop(now + VOICE_STEAL_FADE);
+  } catch (err) {
+    // Source already stopped
+  }
 };
 
 

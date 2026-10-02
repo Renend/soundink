@@ -481,35 +481,9 @@ const CanvasComponent = () => {
     // Play the sonification with the specified number of loops
     for (let iteration = 0; iteration <= loops; iteration++) {
       for (let column = firstColumn; column < gridConfigRef.current.numDotsX; column++) {
-        if (polyphonicDots.current[column]) {
-          const playPromises = [];
-          
-          // Determine if this is an accent column
-          const isAccentColumn = (column - firstColumn) % gridConfigRef.current.accent === 0;
-          
-          for (const row in polyphonicDots.current[column]) {
-            const mapRowToNote = getMapRowToNote();
-            const note = mapRowToNote[row];
-            for (const { color, lineId } of polyphonicDots.current[column][row]) {
-              const instrument = idInstrumentMapRef.current[lineId];
-
-              playPromises.push(
-                playSound(
-                  color,
-                  note,
-                  1,
-                  playbackSpeedRef.current,
-                  lineId,
-                  { [color]: instrument },
-                  isAccentColumn,
-                  audioContext,
-                  destination
-                )
-              );
-            }
-          }
-          await Promise.all(playPromises);
-        }
+        // Determine if this is an accent column
+        const isAccentColumn = (column - firstColumn) % gridConfigRef.current.accent === 0;
+        playColumn(column, isAccentColumn, audioContext, destination);
 
         await new Promise(resolve =>
           setTimeout(resolve, playbackSpeedRef.current)
@@ -1091,6 +1065,51 @@ const CanvasComponent = () => {
     polyphonicDots.current = allDots;
   }, [lines, gridConfig]);
 
+  // Plays every stroke in one column. Strokes stacked on the same note with the same instrument are merged into
+  // one voice (identical samples in phase just add up and overload the limiter), and the column is turned down
+  // once it has more than FREE_VOICES distinct notes so dense columns don't clip or cut out.
+  const FREE_VOICES = 4; // Columns with up to this many distinct notes play at full volume
+  const MAX_STACK_BOOST = 1.5; // Most a stack of same-note strokes can be boosted
+  const MAX_VOICES_PER_COLUMN = 16; // Beyond this a column is just a wall of sound; keep the most-stacked notes
+
+  const playColumn = (column, isAccentColumn, audioContext = null, destination = null) => {
+    const cells = polyphonicDots.current[column];
+    if (!cells) return;
+
+    const mapRowToNote = getMapRowToNote();
+    const voices = new Map(); // "instrument|row" -> { color, lineId, note, count }
+    for (const row in cells) {
+      for (const { color, lineId } of cells[row]) {
+        const instrument = idInstrumentMapRef.current[lineId];
+        if (!instrument || instrument === 'mute') continue;
+        const key = `${instrument}|${row}`;
+        const voice = voices.get(key);
+        if (voice) voice.count++;
+        else voices.set(key, { color, lineId, instrument, note: mapRowToNote[row], count: 1 });
+      }
+    }
+
+    const columnVoices = [...voices.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, MAX_VOICES_PER_COLUMN);
+
+    const polyphonyCount = Math.max(1, columnVoices.length / FREE_VOICES);
+    columnVoices.forEach(({ color, lineId, instrument, note, count }) => {
+      playSound(
+        color,
+        note,
+        polyphonyCount,
+        playbackSpeedRef.current,
+        lineId,
+        { [color]: instrument }, // Pass the instrument for this line
+        isAccentColumn,
+        audioContext,
+        destination,
+        Math.min(MAX_STACK_BOOST, Math.sqrt(count))
+      ).catch((err) => console.error('Error playing sound:', err));
+    });
+  };
+
   // Called when user starts drawing (pointer down)
   const handlePointerDown = (e) => {
     setWasDragged(false); didActuallyDragRef.current = false; // Reset the dragging flag
@@ -1598,29 +1617,8 @@ const CanvasComponent = () => {
       const isAccentColumn = (column - firstColumn) % gridConfigRef.current.accent === 0;
 
       // Check the latest colorInstrumentMap and play sounds accordingly
-      if (polyphonicDots.current[column]) {
-        const playPromises = [];
-        for (const row in polyphonicDots.current[column]) {
-          const mapRowToNote = getMapRowToNote();
-          const note = mapRowToNote[row];
-          for (const { color, lineId } of polyphonicDots.current[column][row]) {
-            const instrument = idInstrumentMapRef.current[lineId]; // Use the ref to get the instrument
-
-            playPromises.push(
-              playSound(
-                color,
-                note,
-                1,
-                playbackSpeedRef.current,
-                lineId,
-                { [color]: instrument }, // Pass the instrument for this line
-                isAccentColumn
-              )
-            );
-          }
-        }
-        await Promise.all(playPromises);
-      }
+      // Not awaited: a slow sample load shouldn't stretch the beat
+      playColumn(column, isAccentColumn);
 
       // Dynamically adjust tempo using `playbackSpeedRef.current`
       await new Promise(resolve =>

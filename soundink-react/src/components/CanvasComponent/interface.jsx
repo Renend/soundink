@@ -620,14 +620,22 @@ const CanvasComponent = () => {
       }
     };
 
-    // Edit Mode: Ctrl/Cmd+C copy, Ctrl/Cmd+V paste
+    // Edit Mode: Ctrl/Cmd+C copy, Ctrl/Cmd+V paste, Delete/Backspace delete
     const handleEditShortcuts = (event) => {
-      const { isEditMode, copySelection, pasteClipboard } = editShortcutsRef.current;
-      if (!isEditMode || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const { isEditMode, copySelection, pasteClipboard, deleteSelection } = editShortcutsRef.current;
+      if (!isEditMode) return;
 
       // Don't hijack typing in text fields (sliders are inputs too, so allow those)
       const t = event.target;
       if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range'))) return;
+
+      if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault(); // Backspace would otherwise navigate back in some browsers
+        deleteSelection();
+        return;
+      }
+
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
 
       const key = event.key.toLowerCase();
       if (key === 'c') { event.preventDefault(); copySelection(); }
@@ -1596,6 +1604,23 @@ const CanvasComponent = () => {
     pasteCountRef.current = 0;
   };
 
+  // Deletes the selected strokes (sweep group, else the tapped stroke) as one undo step
+  const deleteSelection = () => {
+    const ids = getActiveSelectionIds();
+    if(ids.length === 0) return;
+
+    setUndoStack((prev) => [...prev, { lines, sonificationPoints, idInstrumentMap }]);
+    setRedoStack([]);
+
+    ids.forEach((lineId) => stopSoundsForLine(lineId));
+    const updatedLines = lines.filter((l) => !ids.includes(l.lineId));
+    setLines(updatedLines);
+    setSonificationPoints(updatedLines.flatMap((l) => l.sonificationPoints));
+
+    setSelectedLine(null); // Also closes the edit pop-up
+    setSelectedLineIds([]);
+  };
+
   const pasteClipboard = () => {
     if(clipboardRef.current.length === 0) return;
     pasteCountRef.current += 1;
@@ -1609,7 +1634,7 @@ const CanvasComponent = () => {
   */
 
   const editShortcutsRef = useRef({});
-  editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard };
+  editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard, deleteSelection };
 
 
   // Undo and redo logic for managing drawing history
@@ -2230,9 +2255,14 @@ const CanvasComponent = () => {
                 />
               ))
             )}
-            <button className="duplicate-button" onClick={duplicateSelection}>
-              Duplicate
-            </button>
+            <div className="selection-actions">
+              <button className="duplicate-button" onClick={duplicateSelection}>
+                Duplicate
+              </button>
+              <button className="delete-button" onClick={deleteSelection}>
+                Delete
+              </button>
+            </div>
           </div>
 
           {/* Instrument Grid on the Right */}

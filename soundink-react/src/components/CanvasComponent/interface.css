@@ -2338,3 +2338,33 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   background-color: #f0f0f0;
   transform: scale(1.02);
 }
+
+/* Duplicate + Delete side by side under the colour grid in the edit pop-up */
+.selection-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+}
+
+.selection-actions .duplicate-button,
+.selection-actions .delete-button {
+  flex: 1;
+}
+
+.delete-button {
+  height: 44px; /* comfortable touch target */
+  margin-top: 6px;
+  background-color: #ffffff;
+  border: 2px solid #d1123f;
+  border-radius: 25px;
+  color: #d1123f;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #ffe5ec;
+  transform: scale(1.02);
+}

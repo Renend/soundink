@@ -2120,11 +2120,14 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     display: none !important;
   }
 
-  /* Canvas fills the rest; left padding for the left bar */
+  /* Canvas fills the rest, starting right of the 80px left bar. A margin (not padding) so the container's
+     edge is where drawing starts: pointer coordinates, the SVG strokes and the grid canvas all measure from it.
+     (Padding put strokes 80px to the right of the finger.) */
   .canvas-container {
     height: 100vh;
     padding-bottom: 0 !important;
-    padding-left: 80px;
+    margin-left: 80px;
+    width: calc(100vw - 80px);
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -2299,12 +2302,29 @@ dvh adjusts automatically when Safari URL bar shows/hides.
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
   }
 
-  /* Modal: account for left bar offset */
+  /* Modal: account for left bar offset. border-box so the padding counts toward max-height
+     (otherwise it overflowed the screen and the close button sat off the top edge) */
   .combined-selection-modal {
+    box-sizing: border-box;
     max-height: 90dvh;
+    max-width: calc(100vw - 16px); /* The desktop layout is ~660px wide; small phones (iPhone SE: 568px) cut it off */
     overflow-y: auto;
     overflow-x: hidden;
-    padding-top: 48px;
+    padding: 48px 20px 20px;
+    gap: 20px;
+  }
+
+  .combined-selection-modal .color-options {
+    width: auto;
+  }
+
+  .combined-selection-modal .color-option {
+    width: 48px;
+    height: 48px;
+  }
+
+  .combined-selection-modal .instrument-options {
+    min-width: 0;
   }
 
   .close-modal-button {

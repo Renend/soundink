@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import './interface.css'; // Importing the associated CSS file for styles
 import { PlayIcon, StopIcon, UndoIcon, RedoIcon, BrushIcon, EraseIcon, TempoIcon, GridIcon, GearIcon, TrashIcon, quitIcon, downloadIcon, uploadIcon, CleanIcon, muteIcon, bassIcon, guitarIcon, marimbaIcon, pianoIcon, violinIcon, fluteIcon, glassIcon, synthIcon, majorIcon, harmonicMinorIcon, melodicMinorIcon, minorPentatonicIcon, majorPentatonicIcon, instrumentIcons, scaleIcons, customInstrumentNames, customScaleNames, colors, sizes, MAX_DELAY, ERASER_COLOR, options, isPointNearDot, isPointNearLineSegment, useBpm, usePlaybackSpeed, useMediaQuery, uuidv4, stopSoundsForLine, preloadSounds, resumeAudioContext, getSvgPathFromStroke, getStroke, getMapRowToNote, setScale, playSound, GridCanvas, firstColumn, fistColumnScan, dotRadius, canvasDimensions, gridConfigurations, setMasterVolume, getStrokeWidthFromOptions, calculateLocalWidth, PaletteIcon, EditIcon } from './import'; // Importing the necessary functions and constants from the import file
 import { mapNoteToSampleNumber, scales } from './soundMappings';
@@ -78,6 +78,7 @@ const CanvasComponent = () => {
   const [wasDragged, setWasDragged] = useState(false);
   const didActuallyDragRef = useRef(false); // ref mirror used only for undo commit in pointer-up
   const clickPointRef = useRef(null); // Temporary global variable for clickPoint
+  const lastPointerTypeRef = useRef('mouse'); // 'mouse' | 'touch' | 'pen' of the last pointer-up on the canvas
 
   const [selectedLineIds, setSelectedLineIds] = useState([]);
   const selectedLineIdsRef = useRef([]);
@@ -1297,7 +1298,8 @@ const CanvasComponent = () => {
     }
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e) => {
+    lastPointerTypeRef.current = e?.pointerType; // Used by the edit pop-up's ghost-click guard
 
     if (isEditMode) {
       const clickPoint = clickPointRef.current;
@@ -1632,6 +1634,22 @@ const CanvasComponent = () => {
   - Keyboard listener is registered once, so it only sees stale state
   - this ref is refreshed every render, so the listener can always reach the latest functions
   */
+
+  // Ghost-click guard for the edit pop-up. It opens on pointer-up, and on touch devices the browser then sends a
+  // click to whatever is now under the finger: the backdrop (closing the pop-up) or a swatch/instrument button
+  // (silently changing the stroke). Clicks that arrive right after it opens are ignored.
+  const GHOST_CLICK_WINDOW = 300; // ms; ghost clicks arrive right after the finger lifts
+  const lineModalOpenedAtRef = useRef(0);
+  useLayoutEffect(() => {
+    // Only touch/pen taps produce ghost clicks; a mouse click never lands inside the new pop-up
+    if (selectedLine && lastPointerTypeRef.current !== 'mouse') lineModalOpenedAtRef.current = Date.now();
+  }, [selectedLine]);
+  const blockGhostClick = (e) => {
+    if (Date.now() - lineModalOpenedAtRef.current < GHOST_CLICK_WINDOW) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
 
   const editShortcutsRef = useRef({});
   editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard, deleteSelection };
@@ -2039,11 +2057,6 @@ const CanvasComponent = () => {
           </button>
         </div>
 
-        {/* Pop-up for clearing the screen */}
-        {isClearScreenPopupVisible && (
-          <ClearScreenPopup onConfirm={confirmClearScreen} onCancel={cancelClearScreen} />
-        )}
-
         {/* Hidden file input for loading */}
         <input
           type="file"
@@ -2052,11 +2065,6 @@ const CanvasComponent = () => {
           style={{ display: "none" }} // Hide the input, trigger with a button
           ref={(input) => (loadInputRef = input)} // Assign the input to the ref
         />
-
-        {/* Save Pop-up */}
-        {isSavePopupVisible && (
-          <SavePopup onSave={handleSave} onCancel={cancelSaveDrawing} />
-        )}
 
         {/* Your other UI elements */}
         <svg ref={svgRef} /* other attributes */>
@@ -2226,6 +2234,7 @@ const CanvasComponent = () => {
       {selectedLine && (
         <div
           className="popup-overlay"
+          onClickCapture={blockGhostClick}
           onClick={() => setSelectedLine(null)}
         >
           <div

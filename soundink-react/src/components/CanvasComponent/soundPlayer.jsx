@@ -36,6 +36,7 @@ const generateSoundFiles = () => {
 // AudioContext is created lazily on first user gesture so iOS Safari doesn't suspend it.
 let audioCtx = null;
 let masterGainNode = null;
+let masterVolume = 0.8; // Remembered so a volume set before the first Play still applies
 let limiterNode = null;
 
 const getAudioContext = () => {
@@ -43,7 +44,7 @@ const getAudioContext = () => {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     masterGainNode = audioCtx.createGain();
-    masterGainNode.gain.value = 0.8;
+    masterGainNode.gain.value = masterVolume;
 
     limiterNode = audioCtx.createDynamicsCompressor();
     // Safety ceiling: catches loud peaks (e.g. many duplicated strokes) before they reach the speakers
@@ -331,8 +332,9 @@ export const stopSoundsForLine = (lineId) => {
 
 // Function to adjust the master volume
 export const setMasterVolume = (volume) => {
+  masterVolume = Math.max(0, Math.min(volume, 1)); // Volume range: 0 (mute) to 1 (full)
   if (masterGainNode) {
-    masterGainNode.gain.value = Math.max(0, Math.min(volume, 1)); // Volume range: 0 (mute) to 1 (full)
+    masterGainNode.gain.value = masterVolume;
   }
 };
 

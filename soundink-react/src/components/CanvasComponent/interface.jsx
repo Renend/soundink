@@ -451,6 +451,7 @@ const CanvasComponent = () => {
         
         const loadedBpm = loadedData.bpm || 250;
         setBpm(loadedBpm);
+        setPlaybackSpeed(Math.round(60000 / loadedBpm)); // Playback runs off the speed, not the BPM
         
         const loadedVolume = loadedData.volume !== undefined ? loadedData.volume : 0.8;
         setVolume(loadedVolume);

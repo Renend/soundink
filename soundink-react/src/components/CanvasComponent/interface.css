@@ -59,7 +59,43 @@ html, body {
   background: linear-gradient(90deg, var(--sideBarColor) 0%, var(--sideBarColor) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   border: 3px solid var(--sideBarColor);
-  zoom: clamp(0.55, min(calc(100vh / 920px), calc(100vw / 1050px)), 1);
+  flex-shrink: 0;
+  /* zoom is set from JS (interface.jsx) from the window size, capped so the whole column fits the window height */
+}
+
+.controls-container.sidebar-hidden {
+  display: none;
+}
+
+/* Zero-width anchor at the sidebar's right edge; the hide/show tab overhangs the canvas from here */
+.sidebar-edge {
+  position: relative;
+  flex-shrink: 0;
+  width: 0;
+  height: 100vh;
+  z-index: 5; /* Above the canvas */
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 64px;
+  padding: 0;
+  border: none;
+  border-radius: 0 14px 14px 0;
+  background-color: var(--sideBarColor);
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+  filter: brightness(1.08);
 }
 
 
@@ -1795,7 +1831,8 @@ Portrait Phone: bottom bar layout
   }
 
   /* Hide the desktop sidebar */
-  .controls-container {
+  .controls-container,
+  .sidebar-edge {
     display: none !important;
   }
 
@@ -2116,7 +2153,8 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   }
 
   /* Hide the desktop sidebar */
-  .controls-container {
+  .controls-container,
+  .sidebar-edge {
     display: none !important;
   }
 

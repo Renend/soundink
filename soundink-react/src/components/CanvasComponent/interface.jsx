@@ -2469,7 +2469,11 @@ const CanvasComponent = () => {
           ))}
           <button
             className="phone-gear-btn"
-            onClick={() => openInstrumentMenu(currentColor)}
+            onClick={() => {
+              if (isEditMode) exitEditMode();
+              // In trash mode currentColor is the hidden 'eraser' slot; open the colour the user was drawing with
+              openInstrumentMenu(colorInstrumentMap[currentColor] ? currentColor : colorInstrumentMap[previousColor] ? previousColor : 'color1');
+            }}
           >
             <img src={GearIcon} alt="Edit" className="iconGear" />
           </button>

@@ -257,6 +257,10 @@ const CanvasComponent = () => {
   };
 
   const handleSave = async ({ saveJson, saveImage, saveAudio, audioLoops }) => {
+    setIsSavePopupVisible(false);
+    // Recording audio plays the piece through in real time, so show the spinner meanwhile
+    if (saveAudio) setIsDownloading(true);
+
     if (saveJson) {
       confirmSaveAsJson();
     }
@@ -268,7 +272,6 @@ const CanvasComponent = () => {
     }
 
     setIsDownloading(false);
-    setIsSavePopupVisible(false); // Hide the pop-up after saving
   };
 
   // const cancelSaveDrawing = () => {
@@ -291,6 +294,8 @@ const CanvasComponent = () => {
       gridIndex,               // Which grid config (0-5)
       bpm,                     // Tempo
       volume,                  // Master volume
+      canvasWidth: originalSvgSize.current.width,   // Canvas size the strokes are stored at,
+      canvasHeight: originalSvgSize.current.height, // so loading on another screen can rescale them
     };
 
     const serializer = new XMLSerializer();
@@ -332,7 +337,7 @@ const CanvasComponent = () => {
     ctx.scale(scale, scale);
 
     // Draw a white background
-    ctx.fillStyle = '#eae6e1';
+    ctx.fillStyle = '#ffffff'; // Same as the canvas
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Use Canvg to render the SVG onto the canvas
@@ -395,11 +400,15 @@ const CanvasComponent = () => {
       }
     }
 
-    // Small buffer to ensure the last note finishes before stopping the recorder
-    setTimeout(() => {
-      recorder.stop();
-      console.log("Recorder stopped.");
-    }, 600);
+    // Small buffer to ensure the last note finishes before stopping the recorder; resolves once the file is saved
+    await new Promise((resolve) => {
+      recorder.addEventListener('stop', resolve);
+      setTimeout(() => {
+        recorder.stop();
+        console.log("Recorder stopped.");
+      }, 600);
+    });
+    audioContext.close();
   };
 
   const cancelSaveDrawing = () => {
@@ -408,6 +417,7 @@ const CanvasComponent = () => {
 
   const handleLoadDrawing = (e) => {
     const file = e.target.files[0];
+    e.target.value = ''; // So choosing the same file again still fires onChange
     if (!file) return;
 
     const reader = new FileReader();
@@ -417,9 +427,23 @@ const CanvasComponent = () => {
       if (jsonData.dataset) {
         const loadedData = jsonData.dataset;
         
-        // Load drawing data
-        const loadedLines = loadedData.lines || [];
+        // Load drawing data, rescaled from the canvas size it was saved at (older files don't record it)
+        let loadedLines = loadedData.lines || [];
+        if (loadedData.canvasWidth && loadedData.canvasHeight) {
+          const scaleX = originalSvgSize.current.width / loadedData.canvasWidth;
+          const scaleY = originalSvgSize.current.height / loadedData.canvasHeight;
+          loadedLines = loadedLines.map((line) => ({
+            ...line,
+            points: line.points.map(([x, y, ...rest]) => [x * scaleX, y * scaleY, ...rest]),
+          }));
+        }
         setLines(loadedLines);
+        setSonificationPoints([]);
+
+        // A loaded file starts a fresh history (undo would otherwise bring back strokes from the previous drawing)
+        setUndoStack([]);
+        setRedoStack([]);
+        exitEditMode();
         
         // Load instrument mappings
         const loadedIdInstrumentMap = loadedData.idInstrumentMap || {};

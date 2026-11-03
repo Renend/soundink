@@ -598,14 +598,23 @@ const CanvasComponent = () => {
       }
     };
 
+    // Ctrl/Cmd+Z undo, Shift+Ctrl/Cmd+Z or Ctrl/Cmd+Y redo
     // Edit Mode: Ctrl/Cmd+C copy, Ctrl/Cmd+V paste, Delete/Backspace delete
     const handleEditShortcuts = (event) => {
-      const { isEditMode, copySelection, pasteClipboard, deleteSelection } = editShortcutsRef.current;
-      if (!isEditMode) return;
+      const { isEditMode, copySelection, pasteClipboard, deleteSelection, handleUndo, handleRedo } = editShortcutsRef.current;
 
       // Don't hijack typing in text fields (sliders are inputs too, so allow those)
       const t = event.target;
       if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range'))) return;
+
+      // Undo/redo work in every mode
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'z' && !event.shiftKey) { event.preventDefault(); handleUndo(); return; }
+        if ((key === 'z' && event.shiftKey) || key === 'y') { event.preventDefault(); handleRedo(); return; }
+      }
+
+      if (!isEditMode) return;
 
       if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault(); // Backspace would otherwise navigate back in some browsers
@@ -1665,8 +1674,6 @@ const CanvasComponent = () => {
     }
   };
 
-  const editShortcutsRef = useRef({});
-  editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard, deleteSelection };
 
 
   // Undo and redo logic for managing drawing history
@@ -1698,6 +1705,9 @@ const CanvasComponent = () => {
       }
     }
   };
+
+  const editShortcutsRef = useRef({});
+  editShortcutsRef.current = { isEditMode, duplicateSelection, copySelection, pasteClipboard, deleteSelection, handleUndo, handleRedo };
 
   const ClearScreenPopup = ({ onConfirm, onCancel }) => (
     <div className="popup-overlay">

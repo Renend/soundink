@@ -267,6 +267,8 @@ button {
 .controls-container.menu-active .vertical-sliders-1,
 .controls-container.menu-active .eraser-container,
 .controls-container.menu-active .loop-scale-group,
+.controls-container.menu-active .grid-scale-row,
+.controls-container.menu-active .steps-group,
 .controls-container.menu-active .load-save-group {
   opacity: 0.35;
   pointer-events: none;

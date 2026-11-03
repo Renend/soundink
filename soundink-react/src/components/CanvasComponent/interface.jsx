@@ -491,13 +491,6 @@ const CanvasComponent = () => {
     setIsSettingsMenuOpen(false); // Close the custom pop-up
   };
 
-  const handleClickOutside = (event) => {
-    // Check if the click is outside the scale menu
-    if (scaleMenuRef.current && !scaleMenuRef.current.contains(event.target)) {
-      setIsScaleMenuOpen(false); // Close the scale menu
-    }
-  };
-
   const handleClickOutsideColorPalette = (event) => {
     if (colorPaletteRef.current && !colorPaletteRef.current.contains(event.target)) {
       closeColorPalette(); // Close the color palette if the click is outside
@@ -567,17 +560,6 @@ const CanvasComponent = () => {
 
     return () => document.removeEventListener("mousedown", handleClickOutsideSave);
   }, [isSavePopupVisible]);
-
-  useEffect(() => {
-    if (isScaleMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    // Cleanup the event listener on unmount
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isScaleMenuOpen]);
 
   useEffect(() => {
     if (activeColorSlot) {
@@ -2205,7 +2187,8 @@ const CanvasComponent = () => {
 
       {/* Scale Selection Modal */}
       {isScaleMenuOpen && (
-        <div ref={scaleMenuRef} className="scale-selection-modal">
+        <div className="popup-overlay" onClick={() => setIsScaleMenuOpen(false)}>
+        <div ref={scaleMenuRef} className="scale-selection-modal" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setIsScaleMenuOpen(false)}
             className="close-modal-button top-left"
@@ -2229,6 +2212,7 @@ const CanvasComponent = () => {
               </div>
             ))}
           </div>
+        </div>
         </div>
       )}
 

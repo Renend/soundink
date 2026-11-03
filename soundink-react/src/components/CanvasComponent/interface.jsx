@@ -62,8 +62,6 @@ const CanvasComponent = () => {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const settingsMenuRef = useRef(null);
   const [volume, setVolume] = useState(0.8); // Default volume is 80%
-  const [activeColorSlot, setActiveColorSlot] = useState(null); // Tracks the slot for which the palette is open
-  const colorPaletteRef = useRef(null); // Ref for the color palette modal
 
   const [selectedColor, setSelectedColor] = useState(null); // Track the color for which the modal is shown
   const [selectedSlot, setSelectedSlot] = useState(null); // Track the selected slot for the combined menu
@@ -235,24 +233,6 @@ const CanvasComponent = () => {
         });
       }
     });
-  };
-
-  const handleLongPress = (slot) => {
-    setActiveColorSlot(slot); // Open the color palette for the selected slot
-  };
-  
-  const closeColorPalette = () => {
-    setActiveColorSlot(null); // Close the color palette
-  };
-
-  let pressTimer;
-
-  const handleMouseDown = (slot) => {
-    pressTimer = setTimeout(() => handleLongPress(slot), 500); // 500ms for long press
-  };
-
-  const handleMouseUp = () => {
-    clearTimeout(pressTimer); // Clear the timer if the user releases early
   };
 
   const handleGridChange = (e) => {
@@ -491,12 +471,6 @@ const CanvasComponent = () => {
     setIsSettingsMenuOpen(false); // Close the custom pop-up
   };
 
-  const handleClickOutsideColorPalette = (event) => {
-    if (colorPaletteRef.current && !colorPaletteRef.current.contains(event.target)) {
-      closeColorPalette(); // Close the color palette if the click is outside
-    }
-  };
-
   const handleClickOutsideClearScreen = (event) => {
     if (clearScreenPopupRef.current && !clearScreenPopupRef.current.contains(event.target)) {
       setIsClearScreenPopupVisible(false);
@@ -560,18 +534,6 @@ const CanvasComponent = () => {
 
     return () => document.removeEventListener("mousedown", handleClickOutsideSave);
   }, [isSavePopupVisible]);
-
-  useEffect(() => {
-    if (activeColorSlot) {
-      document.addEventListener("mousedown", handleClickOutsideColorPalette);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutsideColorPalette);
-    }
-  
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutsideColorPalette);
-    };
-  }, [activeColorSlot]);
 
   // const handleClickOutsideInstrument = (event) => {
   //   if (
@@ -1846,9 +1808,6 @@ const CanvasComponent = () => {
                 // style={{ backgroundColor: colorSlots[slot], position: 'relative' }} // Add relative positioning
                 // style={{ backgroundColor: colorSlots[slot], borderColor: colorSlots[slot] }}
                 style={{ borderColor: colorSlots[slot], border: `12px solid ${colorSlots[slot]}` }}
-                onMouseDown={() => handleMouseDown(slot)} // Detect long press
-                onMouseUp={handleMouseUp} // Clear timer on release
-                onMouseLeave={handleMouseUp} // Clear timer if the mouse leaves the button
                 onClick={() => {
                   exitEditMode() // leave edit
                   setCurrentColor(slot); // Set the selected slot
@@ -2468,9 +2427,6 @@ const CanvasComponent = () => {
               key={index}
               className={`phone-color-dot ${!isEditMode && currentColor === slot ? 'active' : ''}`}
               style={{ border: `7px solid ${colorSlots[slot]}` }}
-              onMouseDown={() => handleMouseDown(slot)}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
               onClick={() => { exitEditMode(); setCurrentColor(slot); setIsEraser(false); setIsTrash(false); }}
             >
               <img src={instrumentIcons[colorInstrumentMap[slot]]} alt={colorInstrumentMap[slot]} className="phone-color-icon" />

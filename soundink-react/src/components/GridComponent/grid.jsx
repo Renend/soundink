@@ -93,8 +93,9 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
 
     const { numDotsX, numDotsY, dotRadius } = gridConfig; // Destructure grid configuration
 
-    const drawGlowingDot = (ctx, x, y, color) => {
+    const drawGlowingDot = (ctx, x, y, color, opacity = 1) => {
         ctx.save(); // Save the context state
+        ctx.globalAlpha = opacity; // Fainter strokes glow fainter
 
         // Same-hue glow around a high-contrast centre so hits stand out on top of the stroke
         const glowColor = getContrastingGlowColor(color);
@@ -167,7 +168,7 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
             if (isScanned && isIntersected && !isBackgroundColor) {
                 // const lineColor = intersectData.color;
                 // console.log('Scanned and intersected dot color:', lineColor);
-                drawGlowingDot(ctx, x, y, lineColor); // Draw intense glow
+                drawGlowingDot(ctx, x, y, lineColor, intersectData.opacity ?? 1); // Draw intense glow
             } else if (isScanned) {
                 drawSmoothDot(ctx, x, y, 'rgba(255, 88, 51, 0.11)', true); // Mild glow for scanned dots
             } else if (isBackgroundColor) {

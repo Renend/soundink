@@ -983,10 +983,11 @@ const CanvasComponent = () => {
           size: line.size,
           lineId: line.lineId,
           instrument: line.instrument,
+          opacity: line.opacity ?? 1,
         };
         if (!top[column]) top[column] = {};
         if (!all[column]) all[column] = {};
-        top[column][row] = entry; // Later strokes are drawn on top, so they win
+        if (entry.opacity > 0) top[column][row] = entry; // Later strokes are drawn on top, so they win
         (all[column][row] ||= []).push(entry);
       }
     });
@@ -1010,15 +1011,15 @@ const CanvasComponent = () => {
     if (!cells) return;
 
     const mapRowToNote = getMapRowToNote();
-    const voices = new Map(); // "instrument|row" -> { color, lineId, note, count }
+    const voices = new Map(); // "instrument|row" -> { color, lineId, note, count, opacitySum }
     for (const row in cells) {
-      for (const { color, lineId } of cells[row]) {
+      for (const { color, lineId, opacity = 1 } of cells[row]) {
         const instrument = idInstrumentMapRef.current[lineId];
-        if (!instrument || instrument === 'mute') continue;
+        if (!instrument || instrument === 'mute' || opacity <= 0) continue;
         const key = `${instrument}|${row}`;
         const voice = voices.get(key);
-        if (voice) voice.count++;
-        else voices.set(key, { color, lineId, instrument, note: mapRowToNote[row], count: 1 });
+        if (voice) { voice.count++; voice.opacitySum += opacity; }
+        else voices.set(key, { color, lineId, instrument, note: mapRowToNote[row], count: 1, opacitySum: opacity });
       }
     }
 
@@ -1027,7 +1028,7 @@ const CanvasComponent = () => {
       .slice(0, MAX_VOICES_PER_COLUMN);
 
     const polyphonyCount = Math.max(1, columnVoices.length / FREE_VOICES);
-    columnVoices.forEach(({ color, lineId, instrument, note, count }) => {
+    columnVoices.forEach(({ color, lineId, instrument, note, count, opacitySum }) => {
       playSound(
         color,
         note,
@@ -1038,7 +1039,7 @@ const CanvasComponent = () => {
         isAccentColumn,
         audioContext,
         destination,
-        Math.min(MAX_STACK_BOOST, Math.sqrt(count))
+        Math.min(MAX_STACK_BOOST, Math.sqrt(count)) * (opacitySum / count) // Fainter strokes play quieter
       ).catch((err) => console.error('Error playing sound:', err));
     });
   };
@@ -1537,6 +1538,26 @@ const CanvasComponent = () => {
     setSelectedLine(null); // Close the modal after updating
   };
 
+  // Opacity slider in the edit pop-up. Updates live while dragging; one drag (or key press) is one undo step.
+  const opacityEditActiveRef = useRef(false);
+  const updateLineOpacity = (line, newOpacity) => {
+    const activeIds = selectedLineIdsRef.current;
+    const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
+      ? activeIds
+      : [line.lineId];
+    if (!opacityEditActiveRef.current) {
+      opacityEditActiveRef.current = true;
+      setUndoStack(prev => [...prev, { lines, sonificationPoints, idInstrumentMap }]);
+      setRedoStack([]);
+    }
+    setLines((prevLines) =>
+      prevLines.map((l) =>
+        idsToUpdate.includes(l.lineId) ? { ...l, opacity: newOpacity } : l
+      )
+    );
+  };
+  const endOpacityEdit = () => { opacityEditActiveRef.current = false; };
+
   const updateLineInstrument = (line, newInstrument) => {
     const activeIds = selectedLineIdsRef.current;
     const idsToUpdate = (activeIds.length > 1 && activeIds.includes(line.lineId))
@@ -1798,10 +1819,15 @@ const CanvasComponent = () => {
         <path
           d={pathData}
           fill={line.color}
+          fillOpacity={line.opacity ?? 1}
         />
       </g>
     );
   });
+
+  // selectedLine is a snapshot from when the pop-up opened; read live values (e.g. opacity) from lines
+  const selectedLineLive = selectedLine && lines.find((l) => l.lineId === selectedLine.lineId);
+  const selectedLineOpacity = selectedLineLive?.opacity ?? 1;
 
   // Generates the stroke for the current line being drawn
   const currentStroke = getSvgPathFromStroke(getStroke(currentLine, { ...options, size: currentSize }));
@@ -2302,6 +2328,25 @@ const CanvasComponent = () => {
                 />
               ))
             )}
+            {/* Opacity: fainter strokes also play quieter */}
+            <div className="opacity-control">
+              <span className="opacity-label">Opacity</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={selectedLineOpacity}
+                style={{ '--opacity-color': selectedLineLive?.color ?? selectedLine.color }}
+                onChange={(e) => updateLineOpacity(selectedLine, parseFloat(e.target.value))}
+                onPointerUp={endOpacityEdit}
+                onKeyUp={endOpacityEdit}
+                onBlur={endOpacityEdit}
+              />
+              <span className="opacity-value">
+                {Math.round(selectedLineOpacity * 100)}%
+              </span>
+            </div>
             <div className="selection-actions">
               <button className="duplicate-button" onClick={duplicateSelection}>
                 Duplicate

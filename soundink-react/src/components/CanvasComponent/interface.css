@@ -2399,6 +2399,54 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   transform: scale(1.02);
 }
 
+/* Opacity slider under the colour grid in the edit pop-up */
+.opacity-control {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+
+.opacity-value {
+  min-width: 44px;
+  text-align: right;
+}
+
+.opacity-control input[type="range"] {
+  flex: 1;
+  height: 16px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 8px;
+  /* Transparent → stroke colour, over a checkerboard so "transparent" reads as transparent */
+  background:
+    linear-gradient(90deg, transparent, var(--opacity-color, #000000)),
+    repeating-conic-gradient(#ffffff 0% 25%, #d5d5d5 0% 50%) 0 0 / 12px 12px;
+  cursor: pointer;
+}
+
+.opacity-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #1a1a1a;
+}
+
+.opacity-control input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #1a1a1a;
+}
+
 /* Duplicate + Delete side by side under the colour grid in the edit pop-up */
 .selection-actions {
   grid-column: 1 / -1;

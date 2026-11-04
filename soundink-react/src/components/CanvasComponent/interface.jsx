@@ -934,12 +934,39 @@ const CanvasComponent = () => {
     return false;
   };
 
+  // Checks every segment of the stroke, not just its recorded points: a fast stroke's points can be far apart,
+  // and a thin box crossing between two of them would otherwise miss it. The box is grown by half the stroke's
+  // width so touching the visible edge of a thick stroke counts too.
   const lineIntersectsBox = (line, x1, y1, x2, y2) => {
-    const minX = Math.min(x1, x2);
-    const maxX = Math.max(x1, x2);
-    const minY = Math.min(y1, y2);
-    const maxY = Math.max(y1, y2);
-    return line.points.some(([px, py]) => px >= minX && px <= maxX && py >= minY && py <= maxY);
+    const pad = (line.size || 0) / 2;
+    const minX = Math.min(x1, x2) - pad;
+    const maxX = Math.max(x1, x2) + pad;
+    const minY = Math.min(y1, y2) - pad;
+    const maxY = Math.max(y1, y2) + pad;
+    const inside = ([px, py]) => px >= minX && px <= maxX && py >= minY && py <= maxY;
+
+    // Liang–Barsky: clip the segment to the box; it intersects if any part survives
+    const segmentHitsBox = ([ax, ay], [bx, by]) => {
+      const dx = bx - ax, dy = by - ay;
+      let t0 = 0, t1 = 1;
+      for (const [p, q] of [[-dx, ax - minX], [dx, maxX - ax], [-dy, ay - minY], [dy, maxY - ay]]) {
+        if (p === 0) {
+          if (q < 0) return false; // Parallel to this edge and outside it
+        } else {
+          const t = q / p;
+          if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; }
+          else { if (t < t0) return false; if (t < t1) t1 = t; }
+        }
+      }
+      return true;
+    };
+
+    const { points } = line;
+    if (points.length === 1) return inside(points[0]);
+    for (let i = 0; i < points.length - 1; i++) {
+      if (segmentHitsBox(points[i], points[i + 1])) return true;
+    }
+    return false;
   };
 
   // Stroke-to-grid-dot mapping, derived from `lines`. Each stroke's covered dots are cached by its points array,

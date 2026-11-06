@@ -832,10 +832,12 @@ const CanvasComponent = () => {
     return Math.max(MIN_SIDEBAR_ZOOM, Math.min(auto, h / naturalHeight));
   };
 
-  // Returns true if the zoom actually changed
+  // Returns true if the zoom actually changed. The browser rounds the zoom it applies, so re-measuring gives a
+  // value a hair off; treat anything under 0.5% as no change, or each "change" re-triggers the next one.
+  const SIDEBAR_ZOOM_TOLERANCE = 0.005;
   const applySidebarZoom = (zoom) => {
     const container = controlsContainerRef.current;
-    if (!container || zoom === sidebarZoomRef.current) return false;
+    if (!container || Math.abs(zoom - sidebarZoomRef.current) < SIDEBAR_ZOOM_TOLERANCE) return false;
     container.style.zoom = zoom;
     sidebarZoomRef.current = zoom;
     return true;
@@ -843,9 +845,14 @@ const CanvasComponent = () => {
 
   useLayoutEffect(() => {
     if (isSidebarHidden) return; // Nothing to measure while it's hidden
+    let dispatching = false; // The resize below calls update again synchronously; don't let it recurse
     const update = () => {
+      if (dispatching) return;
       // The canvas just got wider/narrower: let the grid and strokes rescale
-      if (applySidebarZoom(getSidebarZoom())) window.dispatchEvent(new Event('resize'));
+      if (applySidebarZoom(getSidebarZoom())) {
+        dispatching = true;
+        try { window.dispatchEvent(new Event('resize')); } finally { dispatching = false; }
+      }
     };
     update();
     window.addEventListener('resize', update);

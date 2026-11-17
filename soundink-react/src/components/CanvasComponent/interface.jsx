@@ -153,14 +153,6 @@ const CanvasComponent = () => {
   const gapSize = isMobile ? '10px' : isTablet ? '15px' : '20px';
   const sidebarWidth = isMobile ? '15vw' : '10vw';
 
-  // Sidebar hide/show. The sidebar is scaled with CSS zoom from the window size, capped so the whole column
-  // always fits the window height (nothing gets cropped off the bottom).
-  const MIN_SIDEBAR_ZOOM = 0.4;
-  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
-  const controlsContainerRef = useRef(null);
-  const controlsScalerRef = useRef(null);
-  const sidebarZoomRef = useRef(1); // Zoom currently applied to the sidebar
-
   useEffect(() => {
     idInstrumentMapRef.current = idInstrumentMap; // Keep the ref in sync with the state
   }, [idInstrumentMap]);
@@ -821,50 +813,6 @@ const CanvasComponent = () => {
       window.removeEventListener('orientationchange', fixBarOnRotation);
     };
   }, [lines, gridConfig]);
-
-  // Default size for this window, shrunk further if the button column wouldn't fit the window height
-  const getSidebarZoom = () => {
-    const w = window.innerWidth, h = window.innerHeight;
-    const scaler = controlsScalerRef.current;
-    // Unzoomed height of the button column (+ the container's top/bottom border)
-    const naturalHeight = scaler ? scaler.getBoundingClientRect().height / sidebarZoomRef.current + 6 : 920;
-    const auto = Math.max(0.55, Math.min(h / 920, w / 1050, 1));
-    return Math.max(MIN_SIDEBAR_ZOOM, Math.min(auto, h / naturalHeight));
-  };
-
-  // Returns true if the zoom actually changed. The browser rounds the zoom it applies, so re-measuring gives a
-  // value a hair off; treat anything under 0.5% as no change, or each "change" re-triggers the next one.
-  const SIDEBAR_ZOOM_TOLERANCE = 0.005;
-  const applySidebarZoom = (zoom) => {
-    const container = controlsContainerRef.current;
-    if (!container || Math.abs(zoom - sidebarZoomRef.current) < SIDEBAR_ZOOM_TOLERANCE) return false;
-    container.style.zoom = zoom;
-    sidebarZoomRef.current = zoom;
-    return true;
-  };
-
-  useLayoutEffect(() => {
-    if (isSidebarHidden) return; // Nothing to measure while it's hidden
-    let dispatching = false; // The resize below calls update again synchronously; don't let it recurse
-    const update = () => {
-      if (dispatching) return;
-      // The canvas just got wider/narrower: let the grid and strokes rescale
-      if (applySidebarZoom(getSidebarZoom())) {
-        dispatching = true;
-        try { window.dispatchEvent(new Event('resize')); } finally { dispatching = false; }
-      }
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [isSidebarHidden]);
-
-  // Hiding/showing the sidebar resizes the canvas
-  const isFirstSidebarRender = useRef(true);
-  useEffect(() => {
-    if (isFirstSidebarRender.current) { isFirstSidebarRender.current = false; return; }
-    window.dispatchEvent(new Event('resize'));
-  }, [isSidebarHidden]);
 
   // Handles the slider input for changing playback speed
   const handleSliderChange = (e) => {
@@ -1869,11 +1817,8 @@ const CanvasComponent = () => {
 
   return (
     <div className="main-container">
-      <div
-        ref={controlsContainerRef}
-        className={`controls-container ${selectedSlot ? 'menu-active' : ''} ${isSidebarHidden ? 'sidebar-hidden' : ''}`}
-      >
-        <div ref={controlsScalerRef} className="controls-scaler">
+      <div className={`controls-container ${selectedSlot ? 'menu-active' : ''}`}>
+        <div className="controls-scaler">
         <div className="play-group">
           <button
             ref={playStopButtonRef} // Add a ref here
@@ -2155,18 +2100,6 @@ const CanvasComponent = () => {
           {/* SVG content */}
         </svg>
         </div>{/* end controls-scaler */}
-      </div>
-
-      {/* Sidebar edge: the tab hides/shows the sidebar */}
-      <div className="sidebar-edge">
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsSidebarHidden((hidden) => !hidden)}
-          aria-label={isSidebarHidden ? 'Show sidebar' : 'Hide sidebar'}
-          title={isSidebarHidden ? 'Show sidebar' : 'Hide sidebar'}
-        >
-          {isSidebarHidden ? '›' : '‹'}
-        </button>
       </div>
 
       <div

@@ -93,7 +93,27 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
 
     const { numDotsX, numDotsY, dotRadius } = gridConfig; // Destructure grid configuration
 
+    // Playhead dots on columns without a hit: concentric rings in the plain dot colour
+    const drawRingDot = (ctx, x, y, color) => {
+        ctx.save();
+        ctx.fillStyle = color;
+        [2.6, 1.7, 1.1, 0.6].forEach((sizeMultiplier) => {
+            ctx.beginPath();
+            ctx.arc(x, y, dotRadius * sizeMultiplier, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fill();
+        });
+        ctx.restore();
+    };
+
     const drawGlowingDot = (ctx, x, y, color, opacity = 1) => {
+        // The glow needs a #rrggbb stroke colour. (An rgba() colour here used to give invalid colours, so the
+        // dots silently reused the last fill colour, which was black when the grid was hidden.)
+        if (!/^#[0-9a-f]{6}$/i.test(color)) {
+            drawRingDot(ctx, x, y, color);
+            return;
+        }
+
         ctx.save(); // Save the context state
         ctx.globalAlpha = opacity; // Fainter strokes glow fainter
 
@@ -170,13 +190,22 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
                 // console.log('Scanned and intersected dot color:', lineColor);
                 drawGlowingDot(ctx, x, y, lineColor, intersectData.opacity ?? 1); // Draw intense glow
             } else if (isScanned) {
-                drawSmoothDot(ctx, x, y, 'rgba(255, 88, 51, 0.11)', true); // Mild glow for scanned dots
+                drawSmoothDot(ctx, x, y, 'rgba(0, 150, 180, 0.18)', true); // Playhead: rings in the dot colour
             } else if (isBackgroundColor) {
                 // For dots erased with the soft eraser, draw with the regular dot color
                 drawSmoothDot(ctx, x, y, 'rgba(0, 150, 180, 0.18)', false);
             } else {
                 drawSmoothDot(ctx, x, y, 'rgba(0, 150, 180, 0.18)', false); // Regular dot color
             }
+        }
+    };
+
+    // Draws the grid. With the grid hidden, only the playhead's column is drawn, so playback still shows the
+    // playhead moving through the drawing.
+    const drawAll = (ctx, width, height) => {
+        ctx.clearRect(0, 0, width, height);
+        for (let i = firstColumn; i < numDotsX; i++) {
+            if (showGrid || i === scannedColumn) drawColumn(ctx, i, width, height);
         }
     };
 
@@ -208,12 +237,7 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
             canvas.width = containerWidth; // Adjust canvas size to container width
             canvas.height = containerHeight; // Adjust canvas size to container height
         
-            if (showGrid) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = firstColumn; i < numDotsX; i++) { // Ensure we draw 24 columns
-                    drawColumn(ctx, i, containerWidth, containerHeight); // Use container dimensions for spacing
-                }
-            }
+            drawAll(ctx, containerWidth, containerHeight); // Use container dimensions for spacing
         };
 
         resizeCanvas();
@@ -231,19 +255,15 @@ const GridCanvas = ({ showGrid, scannedColumn, intersectedDots, gridConfig, colo
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        if (showGrid) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = firstColumn; i < numDotsX; i++) {
-                drawColumn(ctx, i, canvas.width, canvas.height);
-            }
-        }
+        drawAll(ctx, canvas.width, canvas.height);
     }, [scannedColumn, intersectedDots, showGrid]); // Redraw only the scanned column
 
     useEffect(() => {
         // console.log('Received Intersected Dots in GridCanvas:', intersectedDots);
       }, [intersectedDots]);
 
-    return showGrid ? <canvas ref={canvasRef} className="grid-canvas" /> : null;
+    // Always rendered: the playhead is drawn here even when the dots are hidden
+    return <canvas ref={canvasRef} className="grid-canvas" />;
 };
 
 export default GridCanvas;

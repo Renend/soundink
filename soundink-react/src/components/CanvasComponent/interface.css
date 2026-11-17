@@ -2583,3 +2583,184 @@ dvh adjusts automatically when Safari URL bar shows/hides.
   top: 10px;
   right: 10px;
 }
+
+/* ---- Phones: smaller menus that fit the screen without scrolling ---- */
+
+/* Upright phones */
+@media (max-width: 500px) {
+  .combined-selection-modal {
+    max-height: calc(100dvh - 24px);
+    padding: 46px 12px 14px;
+    gap: 10px;
+  }
+
+  .combined-selection-modal .color-options {
+    grid-template-columns: repeat(5, 38px);
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .combined-selection-modal .color-option {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .combined-selection-modal .color-option.active,
+  .combined-selection-modal .instrument-option-button.active {
+    box-shadow: 0 0 0 3px #ffffff;
+  }
+
+  .combined-selection-modal .opacity-control {
+    gap: 8px;
+    margin-top: 2px;
+    font-size: 14px;
+  }
+
+  .combined-selection-modal .duplicate-button,
+  .combined-selection-modal .delete-button {
+    height: 36px;
+    margin-top: 0;
+    font-size: 14px;
+  }
+
+  .combined-selection-modal .instrument-options {
+    gap: 8px 16px;
+    margin-top: 0;
+  }
+
+  .combined-selection-modal .instrument-option-button {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .combined-selection-modal .instrument-label {
+    font-size: 11px;
+  }
+
+  .settings-modal {
+    padding: 46px 16px 18px;
+    gap: 16px;
+  }
+
+  .settings-scale-grid {
+    gap: 8px;
+  }
+
+  .settings-scale-option {
+    padding: 8px 4px 6px;
+  }
+
+  .settings-scale-option .scale-option-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .settings-scale-option .scale-label {
+    font-size: 11px;
+    white-space: normal;
+  }
+}
+
+/* Phones on their side: short screens, so menus go wide instead of tall */
+@media (orientation: landscape) and (min-aspect-ratio: 1.6) and (max-height: 500px) {
+  .combined-selection-modal {
+    flex-direction: row;
+    align-items: flex-start;
+    max-height: calc(100dvh - 16px);
+    padding: 14px 52px 14px 16px;
+    gap: 18px;
+  }
+
+  /* Colours in a 6 x 5 grid, one column per colour family (instead of 5 x 6), with opacity and the
+     Duplicate/Delete buttons in the rows underneath */
+  .combined-selection-modal .color-options {
+    grid-template-columns: repeat(6, 30px);
+    grid-template-rows: repeat(5, 30px) auto auto;
+    grid-auto-flow: column;
+    gap: 6px;
+    width: auto;
+  }
+
+  .combined-selection-modal .color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .combined-selection-modal .color-option.active,
+  .combined-selection-modal .instrument-option-button.active {
+    box-shadow: 0 0 0 3px #ffffff;
+  }
+
+  .combined-selection-modal .opacity-control {
+    grid-row: 6;
+    grid-column: 1 / -1;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+  .combined-selection-modal .opacity-value {
+    min-width: 32px;
+  }
+
+  .combined-selection-modal .selection-actions {
+    grid-row: 7;
+    grid-column: 1 / -1;
+    gap: 8px;
+  }
+
+  .combined-selection-modal .duplicate-button,
+  .combined-selection-modal .delete-button {
+    height: 32px;
+    margin-top: 0;
+    font-size: 13px;
+  }
+
+  .combined-selection-modal .instrument-options {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 6px 12px;
+    margin-top: 0;
+    width: auto;
+  }
+
+  .combined-selection-modal .instrument-option-button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .combined-selection-modal .instrument-label {
+    font-size: 10px;
+  }
+
+  .settings-modal {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 16px 52px 16px 18px;
+    gap: 22px;
+  }
+
+  .settings-scale-grid {
+    gap: 8px;
+  }
+
+  .settings-scale-option {
+    padding: 6px 4px 5px;
+    gap: 3px;
+  }
+
+  .settings-scale-option .scale-option-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .settings-scale-option .scale-label {
+    font-size: 11px;
+  }
+
+  .settings-toggle {
+    height: 44px;
+  }
+}

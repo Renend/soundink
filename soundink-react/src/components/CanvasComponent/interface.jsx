@@ -8,6 +8,11 @@ import { getStrokePoints, getStrokeOutlinePoints } from 'perfect-freehand'; // I
 
 const pointInterpolationDivisor = 10; // Adjust this value to control the density of interpolated points
 
+// Lowest opacity a stroke can have (it also sets the stroke's volume), so a stroke never disappears completely
+const MIN_STROKE_OPACITY = 0.1;
+// A stroke's opacity, kept within the allowed range (older saved drawings may have 0)
+const getStrokeOpacity = (line) => Math.min(1, Math.max(MIN_STROKE_OPACITY, line.opacity ?? 1));
+
 // Cache of each stroke's SVG outline, keyed by its points array. Stroke updates are immutable, so an unchanged
 // stroke keeps the same points array and its outline is reused instead of being recomputed on every render
 // (every pointer move, playhead step and drag frame). Recolouring keeps the points, so it's a cache hit too.
@@ -965,11 +970,11 @@ const CanvasComponent = () => {
           size: line.size,
           lineId: line.lineId,
           instrument: line.instrument,
-          opacity: line.opacity ?? 1,
+          opacity: getStrokeOpacity(line),
         };
         if (!top[column]) top[column] = {};
         if (!all[column]) all[column] = {};
-        if (entry.opacity > 0) top[column][row] = entry; // Later strokes are drawn on top, so they win
+        top[column][row] = entry; // Later strokes are drawn on top, so they win
         (all[column][row] ||= []).push(entry);
       }
     });
@@ -997,7 +1002,7 @@ const CanvasComponent = () => {
     for (const row in cells) {
       for (const { color, lineId, opacity = 1 } of cells[row]) {
         const instrument = idInstrumentMapRef.current[lineId];
-        if (!instrument || instrument === 'mute' || opacity <= 0) continue;
+        if (!instrument || instrument === 'mute') continue;
         const key = `${instrument}|${row}`;
         const voice = voices.get(key);
         if (voice) { voice.count++; voice.opacitySum += opacity; }
@@ -1534,7 +1539,7 @@ const CanvasComponent = () => {
     }
     setLines((prevLines) =>
       prevLines.map((l) =>
-        idsToUpdate.includes(l.lineId) ? { ...l, opacity: newOpacity } : l
+        idsToUpdate.includes(l.lineId) ? { ...l, opacity: Math.min(1, Math.max(MIN_STROKE_OPACITY, newOpacity)) } : l
       )
     );
   };
@@ -1801,7 +1806,7 @@ const CanvasComponent = () => {
         <path
           d={pathData}
           fill={line.color}
-          fillOpacity={line.opacity ?? 1}
+          fillOpacity={getStrokeOpacity(line)}
         />
       </g>
     );
@@ -1809,7 +1814,7 @@ const CanvasComponent = () => {
 
   // selectedLine is a snapshot from when the pop-up opened; read live values (e.g. opacity) from lines
   const selectedLineLive = selectedLine && lines.find((l) => l.lineId === selectedLine.lineId);
-  const selectedLineOpacity = selectedLineLive?.opacity ?? 1;
+  const selectedLineOpacity = selectedLineLive ? getStrokeOpacity(selectedLineLive) : 1;
 
   // Generates the stroke for the current line being drawn
   const currentStroke = getSvgPathFromStroke(getStroke(currentLine, { ...options, size: currentSize }));
@@ -2300,7 +2305,7 @@ const CanvasComponent = () => {
               <span className="opacity-label">Opacity</span>
               <input
                 type="range"
-                min="0"
+                min={MIN_STROKE_OPACITY}
                 max="1"
                 step="0.05"
                 value={selectedLineOpacity}

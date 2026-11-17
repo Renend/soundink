@@ -47,9 +47,7 @@ const CanvasComponent = () => {
   const [scannedColumn, setScannedColumn] = useState(-1);
   const [previousColor, setPreviousColor] = useState(colors[0]);
   const [currentScale, setCurrentScale] = useState('pentatonicMinor'); // Default scale is harmonic minor
-  const [isScaleMenuOpen, setIsScaleMenuOpen] = useState(false); // Toggle for pop-up
   const { bpm, setBpm } = useBpm(); // Access bpm and setBpm from context
-  const scaleMenuRef = useRef(null); // Ref for the scale menu
   const instrumentMenuRef = useRef(null); // Ref for the instrument menu
   const originalSvgSize = useRef({ width: window.innerWidth, height: window.innerHeight });
   const [isLoading, setIsLoading] = useState(true); // Initial loading state
@@ -668,8 +666,7 @@ const CanvasComponent = () => {
     setCurrentScale(selectedScale); // Update current scale for UI
     // setCurrentDirection(selectedScale)
     // console.log('Selected scale:', currentScale);
-    setScale(selectedScale); // Update global scale
-    setIsScaleMenuOpen(false); // Close the menu
+    setScale(selectedScale); // Update global scale (the settings menu stays open)
   };
 
   const openInstrumentMenu = (slot) => {
@@ -1824,7 +1821,8 @@ const CanvasComponent = () => {
     <div className="main-container">
       <div className={`controls-container ${selectedSlot ? 'menu-active' : ''}`}>
         <div className="controls-scaler">
-        <div className="play-group">
+        {/* Play row: same size as the instrument buttons, with a side tab for the settings menu */}
+        <div className={`play-group ${isSettingsMenuOpen ? 'menu-open' : ''}`}>
           <button
             ref={playStopButtonRef} // Add a ref here
             className={`play-stop-button ${isPlaying ? 'stop-mode' : 'play-mode'}`}
@@ -1842,6 +1840,16 @@ const CanvasComponent = () => {
               className={`icon ${isPlaying ? "iconStop" : "iconPlay"}`}
             />
           </button>
+          <div className="gear-tab-wrapper">
+            <div className="instrument-connector" />
+            <button
+              className="instrument-select-button settings-tab-button"
+              onClick={handleSettingsButtonClick}
+              aria-label="Settings"
+            >
+              <img src={GearIcon} alt="Settings" className="iconGear" />
+            </button>
+          </div>
         </div>
 
         <div className="color-group">
@@ -2033,26 +2041,6 @@ const CanvasComponent = () => {
           </button>
         </div> */}
 
-        {/* Grid + Scale Row */}
-        <div className="grid-scale-row">
-          <button
-            className="grid-button"
-            onClick={toggleGrid}
-          >
-            <img src={GridIcon} alt="Grid Icon" className="iconGrid" />
-          </button>
-
-          <button
-            className="scale-button"
-            onClick={() => setIsScaleMenuOpen(true)}
-          >
-            <img
-              src={scaleIcons[currentScale]}
-              alt={`${currentScale} icon`}
-              className="scale-icon"
-            />
-          </button>
-        </div>
 
         {/* Undo and Redo Buttons */}
         <div className="steps-group">
@@ -2152,59 +2140,44 @@ const CanvasComponent = () => {
         </svg>
       </div>
 
+      {/* Settings menu (from the tab next to Play): dot grid on/off and the scale, changeable without closing */}
       {isSettingsMenuOpen && (
-      <div ref={settingsMenuRef} className="settings-selection-modal">
-        <button
-          onClick={handleCloseSettingsMenu} // Close the pop-up
-          className="close-modal-button top-left"
-        >
-          <img src={quitIcon} alt="Close" className="iconQuit" />
-        </button>
-        <div className="settings-options-grid">
-          <div className="settings-option">
-            {/* <button
-              className="clean-button"
-              onClick={() => {
-                if (isEditMode) exitEditMode();
-                handleClearScreen();
-              }}
-            >
-              <img src={CleanIcon} alt="Clean Icon" className="iconClean" />
-            </button> */}
-            <span className="settings-label">Clean Canvas</span>
-          </div>
-        </div>
-      </div>
-      )}
+        <div className="popup-overlay" onClick={handleCloseSettingsMenu}>
+          <div ref={settingsMenuRef} className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <button onClick={handleCloseSettingsMenu} className="close-modal-button top-left">
+              <img src={quitIcon} alt="Close" className="iconQuit" />
+            </button>
 
-      {/* Scale Selection Modal */}
-      {isScaleMenuOpen && (
-        <div className="popup-overlay" onClick={() => setIsScaleMenuOpen(false)}>
-        <div ref={scaleMenuRef} className="scale-selection-modal" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setIsScaleMenuOpen(false)}
-            className="close-modal-button top-left"
-          >
-            <img src={quitIcon} alt="Close" className="iconQuit" />
-          </button>
-          <div className="scale-options-grid">
-            {Object.keys(scaleIcons).map((scale, index) => (
-              <div key={index} className="scale-option-cell">
-                <button
-                  className={`scale-option-button ${currentScale === scale ? 'active' : ''}`}
-                  onClick={() => handleScaleChange(scale)}
-                >
-                  <img
-                    src={scaleIcons[scale]}
-                    alt={`${scale} icon`}
-                    className="scale-option-icon"
-                  />
-                </button>
-                <span className="scale-label">{customScaleNames[scale]}</span>
+            <div className="settings-section">
+              <span className="settings-section-title">Dot grid</span>
+              <button
+                className={`settings-toggle ${showGrid ? 'on' : ''}`}
+                role="switch"
+                aria-checked={showGrid}
+                onClick={toggleGrid}
+              >
+                <img src={GridIcon} alt="" className="iconGrid" />
+                <span className="settings-toggle-track"><span className="settings-toggle-knob" /></span>
+                <span className="settings-toggle-text">{showGrid ? 'On' : 'Off'}</span>
+              </button>
+            </div>
+
+            <div className="settings-section">
+              <span className="settings-section-title">Scale</span>
+              <div className="settings-scale-grid">
+                {Object.keys(scaleIcons).map((scale) => (
+                  <button
+                    key={scale}
+                    className={`settings-scale-option ${currentScale === scale ? 'active' : ''}`}
+                    onClick={() => handleScaleChange(scale)}
+                  >
+                    <img src={scaleIcons[scale]} alt="" className="scale-option-icon" />
+                    <span className="scale-label">{customScaleNames[scale]}</span>
+                  </button>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
         </div>
       )}
 
@@ -2451,12 +2424,8 @@ const CanvasComponent = () => {
                 <img src={TrashIcon} alt="Trash" className="iconTrash" />
               </button>
 
-              <button className="grid-button" onClick={() => { toggleGrid(); setIsPhoneMenuOpen(false); }}>
-                <img src={GridIcon} alt="Grid" className="iconGrid" />
-              </button>
-
-              <button className="scale-button" onClick={() => { setIsScaleMenuOpen(true); setIsPhoneMenuOpen(false); }}>
-                <img src={scaleIcons[currentScale]} alt={currentScale} className="scale-icon" />
+              <button className="settings-button" aria-label="Settings" onClick={() => { handleSettingsButtonClick(); setIsPhoneMenuOpen(false); }}>
+                <img src={GearIcon} alt="Settings" className="iconGear" />
               </button>
 
               <button className="save-button" onClick={() => { handleSaveDrawing(); setIsPhoneMenuOpen(false); }}>

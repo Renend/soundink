@@ -266,16 +266,26 @@ button {
   margin-top: 0;
 }
 
-/* play-group must be height: auto so the button doesn't overflow into the next row */
+/* play-group must be height: auto so the button doesn't overflow into the next row.
+   Laid out like an instrument row (.color-instrument-pair): button + settings tab. */
 .play-group {
   display: flex;
-  gap: 8px;
+  gap: 0;
   width: 100%;
   height: auto;
   justify-content: center;
   align-items: center;
   margin-top: 10px;
   margin-bottom: 8px;
+}
+
+/* Same size and shape as the instrument (colour) buttons */
+.play-group .play-stop-button {
+  width: 75px;
+  height: 75px;
+  margin: 0;
+  border-radius: 30%;
+  flex-shrink: 0;
 }
 
 .eraser-container {
@@ -1683,10 +1693,10 @@ Doesn't affect portrait mode, iPad Pro 11" (834px), iPad Pro 12.9" (1024px).
     padding: 11px 12px;
   }
 
-  /* Play button */
+  /* Play button: same size as the colour buttons below */
   .play-stop-button {
-    width: 70px !important;
-    height: 70px !important;
+    width: 61px !important;
+    height: 61px !important;
   }
 
   .play-group {
@@ -2437,4 +2447,139 @@ dvh adjusts automatically when Safari URL bar shows/hides.
 .delete-button:hover {
   background-color: #ffe5ec;
   transform: scale(1.02);
+}
+
+/* ---- Settings menu (tab next to Play): dot grid switch + scale picker ---- */
+.settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  background-color: var(--menuColor);
+  padding: 48px 36px 32px;
+  border-radius: 25px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-section-title {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* On/off switch for the dot grid */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-start;
+  height: 52px;
+  padding: 0 16px 0 10px;
+  background-color: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 26px;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.settings-toggle .iconGrid {
+  width: 32px;
+  height: 32px;
+}
+
+.settings-toggle-track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 13px;
+  background-color: #b9b9b9;
+  transition: background-color 0.2s;
+}
+
+.settings-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s;
+}
+
+.settings-toggle.on .settings-toggle-track {
+  background-color: #00a6b5;
+}
+
+.settings-toggle.on .settings-toggle-knob {
+  left: 23px;
+}
+
+.settings-toggle-text {
+  min-width: 26px;
+  text-align: left;
+}
+
+/* All scales at once, so changing scale is one tap */
+.settings-scale-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.settings-scale-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  background-color: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.settings-scale-option:hover {
+  transform: scale(1.04);
+}
+
+.settings-scale-option.active {
+  box-shadow: 0 0 0 5px #ffffff;
+}
+
+.settings-scale-option .scale-option-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.settings-scale-option .scale-label {
+  margin-top: 0;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.settings-modal .close-modal-button {
+  top: 10px;
+  right: 10px;
 }

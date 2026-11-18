@@ -825,7 +825,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Brush-dark.svg');
+  background-image: url('../../../../Icons/Brush.svg');
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -842,7 +842,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Metronome-dark.svg');
+  background-image: url('../../../../Icons/Metronome.svg');
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -858,7 +858,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Brush-dark.svg');
+  background-image: url('../../../../Icons/Brush.svg');
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -873,7 +873,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Metronome-dark.svg');
+  background-image: url('../../../../Icons/Metronome.svg');
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -920,7 +920,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Meter-dark.svg'); /* Scale/ruler icon */
+  background-image: url('../../../../Icons/Meter.svg'); /* Scale/ruler icon */
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -944,7 +944,7 @@ button:hover .instrument-sidebar-icon {
   width: 40px;
   height: 40px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Meter-dark.svg'); /* Scale/ruler icon */
+  background-image: url('../../../../Icons/Meter.svg'); /* Scale/ruler icon */
   background-size: contain;
   background-repeat: no-repeat;
   border: 1px solid var(--buttonColor);
@@ -995,7 +995,7 @@ button:hover .instrument-sidebar-icon {
   width: 42px;
   height: 42px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Volume-dark.svg'); /* Volume icon */
+  background-image: url('../../../../Icons/Volume.svg'); /* Volume icon */
   background-size: 65%;
   background-position: center;
   background-repeat: no-repeat;
@@ -1019,7 +1019,7 @@ button:hover .instrument-sidebar-icon {
   width: 40px;
   height: 40px;
   background-color: var(--buttonColor);
-  background-image: url('./../../assets/icons/Volume-dark.svg'); /* Volume icon */
+  background-image: url('../../../../Icons/Volume.svg'); /* Volume icon */
   background-size: contain;
   background-repeat: no-repeat;
   border: 1px solid var(--buttonColor);

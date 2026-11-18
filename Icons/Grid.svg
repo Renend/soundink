@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M4 7C4 5.34315 5.34315 4 7 4C8.65685 4 10 5.34315 10 7C10 8.65685 8.65685 10 7 10C5.34315 10 4 8.65685 4 7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14 7C14 5.34315 15.3431 4 17 4C18.6569 4 20 5.34315 20 7C20 8.65685 18.6569 10 17 10C15.3431 10 14 8.65685 14 7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14 17C14 15.3431 15.3431 14 17 14C18.6569 14 20 15.3431 20 17C20 18.6569 18.6569 20 17 20C15.3431 20 14 18.6569 14 17Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M4 17C4 15.3431 5.34315 14 7 14C8.65685 14 10 15.3431 10 17C10 18.6569 8.65685 20 7 20C5.34315 20 4 18.6569 4 17Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="800" height="800" stroke="black"/>
+<path d="M133.332 233.332C133.332 178.104 178.104 133.332 233.332 133.332C288.56 133.332 333.332 178.104 333.332 233.332C333.332 288.56 288.56 333.332 233.332 333.332C178.104 333.332 133.332 288.56 133.332 233.332Z" stroke-width="55" stroke-linecap="round" stroke-linejoin="round" stroke="black"/>
+<path d="M466.668 233.332C466.668 178.104 511.438 133.332 566.668 133.332C621.898 133.332 666.668 178.104 666.668 233.332C666.668 288.56 621.898 333.332 566.668 333.332C511.438 333.332 466.668 288.56 466.668 233.332Z" stroke-width="55" stroke-linecap="round" stroke-linejoin="round" stroke="black"/>
+<path d="M466.668 566.668C466.668 511.438 511.438 466.668 566.668 466.668C621.898 466.668 666.668 511.438 666.668 566.668C666.668 621.898 621.898 666.668 566.668 666.668C511.438 666.668 466.668 621.898 466.668 566.668Z" stroke-width="55" stroke-linecap="round" stroke-linejoin="round" stroke="black"/>
+<path d="M133.332 566.668C133.332 511.438 178.104 466.668 233.332 466.668C288.56 466.668 333.332 511.438 333.332 566.668C333.332 621.898 288.56 666.668 233.332 666.668C178.104 666.668 133.332 621.898 133.332 566.668Z" stroke-width="55" stroke-linecap="round" stroke-linejoin="round" stroke="black"/>
 </svg>
